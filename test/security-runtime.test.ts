@@ -145,10 +145,10 @@ describe('expiring offline-token refresh', () => {
 
 describe('Admin GraphQL transport', () => {
   test('returns a successful GraphQL envelope without inventing userErrors', async () => {
-    globalThis.fetch = vi.fn(() => Promise.resolve(new Response(JSON.stringify({ data: { draftOrderCreate: { userErrors: [{ message: 'business validation' }] } } }), { status: 200 })))
-    const result = await graphql({ storeDomain: 'example.myshopify.com', accessToken: 'secret' }, 'mutation { draftOrderCreate { userErrors { message } } }', {})
+    globalThis.fetch = vi.fn(() => Promise.resolve(new Response(JSON.stringify({ data: { mutationResult: { userErrors: [{ message: 'business validation' }] } } }), { status: 200 })))
+    const result = await graphql({ storeDomain: 'example.myshopify.com', accessToken: 'secret' }, 'mutation Test { mutationResult { userErrors { message } } }', {})
     expect(result.errors).toEqual([])
-    expect(result.data).toEqual({ draftOrderCreate: { userErrors: [{ message: 'business validation' }] } })
+    expect(result.data).toEqual({ mutationResult: { userErrors: [{ message: 'business validation' }] } })
   })
 
   test('returns partial data, structured errors, request/version and throttle metadata', async () => {
