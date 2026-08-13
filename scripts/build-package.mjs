@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { chmodSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
 const packageRoot = path.resolve(import.meta.dirname, '..')
@@ -10,3 +10,4 @@ execFileSync('npm', ['exec', '--', 'tsc', '--project', './tsconfig.build.json'],
   cwd: packageRoot,
   stdio: 'inherit',
 })
+chmodSync(path.join(outputDirectory, 'codegen', 'cli.js'), 0o755)
