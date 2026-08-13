@@ -1,4 +1,4 @@
-import { env } from '../_generated/server';
+import { env } from '../_generated/server.js';
 const DEFAULT_API_VERSION = '2026-07';
 const REQUEST_TIMEOUT_MS = 15_000;
 export class ShopifyTransportError extends Error {

@@ -1,8 +1,8 @@
 import { v } from 'convex/values'
-import { action, mutation } from './_generated/server'
-import { internal } from './_generated/api'
-import { credentialKeyring, decryptCredential, encryptCredential } from './lib/credentialCrypto'
-import type { Id } from './_generated/dataModel'
+import { action, mutation } from './_generated/server.js'
+import { internal } from './_generated/api.js'
+import { credentialKeyring, decryptCredential, encryptCredential } from './lib/credentialCrypto.js'
+import type { Id } from './_generated/dataModel.js'
 
 const DEFAULT_BATCH_SIZE = 25
 const MAX_BATCH_SIZE = 100

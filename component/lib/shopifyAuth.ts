@@ -1,5 +1,5 @@
 import { jwtVerify } from 'jose'
-import { env } from '../_generated/server'
+import { env } from '../_generated/server.js'
 
 const TOKEN_REQUEST_TIMEOUT_MS = 10_000
 const MAX_REFRESH_ATTEMPTS = 3

@@ -1,4 +1,4 @@
-import { env } from '../_generated/server'
+import { env } from '../_generated/server.js'
 
 export type ShopifyConnection = { storeDomain: string; accessToken: string }
 

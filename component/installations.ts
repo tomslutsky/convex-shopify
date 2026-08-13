@@ -1,6 +1,6 @@
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server'
 import { v } from 'convex/values'
-import { env, internalMutation, internalQuery } from './_generated/server'
+import { env, internalMutation, internalQuery } from './_generated/server.js'
 
 function requiredScopes() {
   return normalizeScopes(env.SHOPIFY_SCOPES ?? '')

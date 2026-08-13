@@ -1,6 +1,6 @@
-import { internal } from '../_generated/api';
-import { decryptCredential, encryptCredential } from './credentialCrypto';
-import { ShopifyTokenRequestError, refreshOfflineToken, requiredEnv } from './shopifyAuth';
+import { internal } from '../_generated/api.js';
+import { decryptCredential, encryptCredential } from './credentialCrypto.js';
+import { ShopifyTokenRequestError, refreshOfflineToken, requiredEnv } from './shopifyAuth.js';
 export const EXPIRY_SKEW_MS = 60_000;
 export function offlineTokenPlan(installation, now, forceRefresh = false) {
     if (installation.accessTokenExpiresAt === undefined)

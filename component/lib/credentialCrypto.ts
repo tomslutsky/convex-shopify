@@ -1,4 +1,4 @@
-import { env } from '../_generated/server'
+import { env } from '../_generated/server.js'
 
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
 

@@ -1,5 +1,5 @@
 import { ConvexError, v } from 'convex/values';
-import { action, env } from './_generated/server';
+import { action, env } from './_generated/server.js';
 const DEFAULT_PARTNER_API_VERSION = '2026-07';
 const REQUEST_TIMEOUT_MS = 15_000;
 const metadataValidator = v.object({

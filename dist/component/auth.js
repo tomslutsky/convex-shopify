@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values';
-import { action, query } from './_generated/server';
-import { internal } from './_generated/api';
-import { encryptCredential } from './lib/credentialCrypto';
-import { ShopifyTokenRequestError, exchangeOfflineToken, requiredEnv, verifyShopifySessionToken } from './lib/shopifyAuth';
+import { action, query } from './_generated/server.js';
+import { internal } from './_generated/api.js';
+import { encryptCredential } from './lib/credentialCrypto.js';
+import { ShopifyTokenRequestError, exchangeOfflineToken, requiredEnv, verifyShopifySessionToken } from './lib/shopifyAuth.js';
 const stateFields = {
     scopes: v.array(v.string()), missingScopes: v.array(v.string()), accessTokenExpiresAt: v.union(v.number(), v.null()), refreshTokenExpiresAt: v.union(v.number(), v.null()),
 };

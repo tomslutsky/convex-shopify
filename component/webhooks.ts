@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
-import { action } from './_generated/server'
-import { validShopifyWebhook } from './lib/shopifyAuth'
+import { action } from './_generated/server.js'
+import { validShopifyWebhook } from './lib/shopifyAuth.js'
 
 const verifyHmac = async (body: ArrayBuffer, signature: string) => validShopifyWebhook(body, signature)
 

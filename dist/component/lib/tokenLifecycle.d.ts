@@ -1,5 +1,5 @@
-import type { ShopifyConnection } from './adminClient';
-import type { ActionCtx } from '../_generated/server';
+import type { ShopifyConnection } from './adminClient.js';
+import type { ActionCtx } from '../_generated/server.js';
 export declare const EXPIRY_SKEW_MS = 60000;
 export type StoredOfflineToken = {
     accessTokenExpiresAt?: number;

@@ -1,9 +1,9 @@
-import { internal } from '../_generated/api'
-import { decryptCredential, encryptCredential } from './credentialCrypto'
-import { ShopifyTokenRequestError, refreshOfflineToken, requiredEnv } from './shopifyAuth'
-import type { ExpiringOfflineToken } from './shopifyAuth'
-import type { ShopifyConnection } from './adminClient'
-import type { ActionCtx } from '../_generated/server'
+import { internal } from '../_generated/api.js'
+import { decryptCredential, encryptCredential } from './credentialCrypto.js'
+import { ShopifyTokenRequestError, refreshOfflineToken, requiredEnv } from './shopifyAuth.js'
+import type { ExpiringOfflineToken } from './shopifyAuth.js'
+import type { ShopifyConnection } from './adminClient.js'
+import type { ActionCtx } from '../_generated/server.js'
 
 export const EXPIRY_SKEW_MS = 60_000
 

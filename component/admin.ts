@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values'
-import { action } from './_generated/server'
-import { ShopifyTokenLifecycleError, ensureFreshConnection } from './lib/tokenLifecycle'
-import { ShopifyTransportError, graphql } from './lib/adminClient'
-import type { ShopifyConnection, ShopifyResponseMetadata } from './lib/adminClient'
+import { action } from './_generated/server.js'
+import { ShopifyTokenLifecycleError, ensureFreshConnection } from './lib/tokenLifecycle.js'
+import { ShopifyTransportError, graphql } from './lib/adminClient.js'
+import type { ShopifyConnection, ShopifyResponseMetadata } from './lib/adminClient.js'
 
 const metadataValidator = v.object({
   requestId: v.union(v.string(), v.null()), apiVersion: v.union(v.string(), v.null()), httpStatus: v.number(),
