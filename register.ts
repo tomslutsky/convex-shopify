@@ -1,13 +1,11 @@
-/// <reference types="vite/client" />
 import schema from './component/schema.js'
+import { componentModules } from './componentModules.js'
 import type { TestConvex } from 'convex-test'
 import type { GenericSchema, SchemaDefinition } from 'convex/server'
 import type { internal as componentInternal } from './component/_generated/api.js'
 
-const modules = import.meta.glob('./component/**/*.*s')
-
 export function register(t: TestConvex<SchemaDefinition<GenericSchema, boolean>>, name = 'shopify') {
-  t.registerComponent(name, schema, modules)
+  t.registerComponent(name, schema, componentModules)
 }
 
 const toReferencePath = Symbol.for('toReferencePath')
@@ -31,4 +29,4 @@ export function componentRef(
   } as unknown as InstallationUpsertReference
 }
 
-export default { register, schema, modules }
+export default { register, schema, modules: componentModules }

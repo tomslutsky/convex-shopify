@@ -1,9 +1,8 @@
-/// <reference types="vite/client" />
 import schema from './component/schema.js';
-const modules = import.meta.glob('./component/**/*.*s');
+import { componentModules } from './componentModules.js';
 /** Register Shopify's component schema and functions with convex-test. */
 export function register(t, name = 'shopify') {
-    t.registerComponent(name, schema, modules);
+    t.registerComponent(name, schema, componentModules);
 }
 export default { register };
 //# sourceMappingURL=test.js.map

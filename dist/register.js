@@ -1,8 +1,7 @@
-/// <reference types="vite/client" />
 import schema from './component/schema.js';
-const modules = import.meta.glob('./component/**/*.*s');
+import { componentModules } from './componentModules.js';
 export function register(t, name = 'shopify') {
-    t.registerComponent(name, schema, modules);
+    t.registerComponent(name, schema, componentModules);
 }
 const toReferencePath = Symbol.for('toReferencePath');
 /**
@@ -14,5 +13,5 @@ export function componentRef(path, name = 'shopify') {
         [toReferencePath]: `_reference/childComponent/${name}/${path}`,
     };
 }
-export default { register, schema, modules };
+export default { register, schema, modules: componentModules };
 //# sourceMappingURL=register.js.map
