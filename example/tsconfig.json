@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@convex-dev/shopify": ["../dist/client.d.ts"],
+      "@convex-dev/shopify/pagination": ["../dist/pagination.d.ts"],
+      "@convex-dev/shopify/partner": ["../dist/partner.d.ts"],
+      "@convex-dev/shopify/convex.config.js": ["../dist/component/convex.config.d.ts"],
+      "@convex-dev/shopify/_generated/component.js": ["../dist/component/_generated/component.d.ts"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

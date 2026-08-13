@@ -1,0 +1,82 @@
+{
+  "name": "@convex-dev/shopify",
+  "version": "0.1.0",
+  "description": "A Convex component and TypeScript facade for Shopify integrations.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "CONTRACT.md",
+    "ARCHITECTURE.md",
+    "ENVIRONMENT.md",
+    "SECURITY.md",
+    "VERSIONING.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./partner": {
+      "types": "./dist/partner.d.ts",
+      "default": "./dist/partner.js"
+    },
+    "./pagination": {
+      "types": "./dist/pagination.d.ts",
+      "default": "./dist/pagination.js"
+    },
+    "./test": {
+      "types": "./dist/test.d.ts",
+      "default": "./dist/test.js"
+    },
+    "./_generated/component.js": {
+      "types": "./dist/component/_generated/component.d.ts"
+    },
+    "./convex.config": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./convex.config.js": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    }
+  },
+  "bin": {
+    "convex-shopify": "./dist/codegen/cli.js"
+  },
+  "scripts": {
+    "build:codegen": "node ./scripts/component-codegen.mjs",
+    "build:package": "node ./scripts/build-package.mjs",
+    "build": "npm run build:codegen && npm run build:package",
+    "typecheck": "tsc --project ./tsconfig.json",
+    "typecheck:example": "tsc --project ./example/tsconfig.json",
+    "verify": "npm run build && npm run typecheck && npm run typecheck:example && npm test && npm run pack:check",
+    "test": "vitest run --config ./vitest.config.ts",
+    "pack:check": "node ./scripts/check-packed-package.mjs"
+  },
+  "peerDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "convex": "^1.43.0",
+    "graphql": ">=16.0.0 <18.0.0"
+  },
+  "dependencies": {
+    "jose": "^6.2.8"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@types/node": "^26.1.2",
+    "convex": "^1.43.0",
+    "convex-test": "^0.0.55",
+    "graphql": "^16.14.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

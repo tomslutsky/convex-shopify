@@ -1,0 +1,11 @@
+component.package.test.ts
+example/
+test/
+*.test.ts
+tsconfig.json
+tsconfig.build.json
+vitest.config.ts
+scripts/
+.github/
+.env*
+
