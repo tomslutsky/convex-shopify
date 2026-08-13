@@ -75,7 +75,7 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "await import('@convex-dev/shopify'); await import('@convex-dev/shopify/partner'); await import('@convex-dev/shopify/convex.config.js')",
+      "await import('@convex-dev/shopify'); await import('@convex-dev/shopify/partner'); await import('@convex-dev/shopify/pagination'); await import('@convex-dev/shopify/convex.config.js'); await import('@convex-dev/shopify/_generated/component.js')",
     ],
     { cwd: consumerRoot, stdio: 'inherit' },
   )
