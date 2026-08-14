@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { createReadStream, createWriteStream, existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
@@ -31,7 +31,11 @@ if (flags.has('--check')) {
   process.exit(0)
 }
 
-const rl = createInterface({ input: process.stdin, output: process.stdout })
+const useControllingTerminal = !process.stdin.isTTY && Boolean(process.stdout.isTTY) && existsSync('/dev/tty')
+if (!assumeYes && !process.stdin.isTTY && !useControllingTerminal) fail('Interactive setup requires a terminal. Re-run npm run setup in a terminal or pass --yes for automation.')
+const promptInput = useControllingTerminal ? createReadStream('/dev/tty') : process.stdin
+const promptOutput = useControllingTerminal ? createWriteStream('/dev/tty') : process.stdout
+const rl = createInterface({ input: promptInput, output: promptOutput })
 
 try {
   console.log('\nShopify + Convex setup\n')
@@ -60,6 +64,10 @@ try {
   console.log('For production, follow docs/OPERATIONS.md. The reviewed flow deploys Convex first, then publishes dist/client with npm run publish:static.\n')
 } finally {
   rl.close()
+  if (useControllingTerminal) {
+    promptInput.destroy()
+    promptOutput.end()
+  }
 }
 
 async function confirm(question, defaultValue) {

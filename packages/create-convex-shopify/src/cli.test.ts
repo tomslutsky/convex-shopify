@@ -10,6 +10,7 @@ const temporaryDirectories: Array<string> = []
 afterEach(() => {
   delete process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE
   delete process.env.CREATE_CONVEX_SHOPIFY_TEST_REF
+  delete process.env.CREATE_CONVEX_SHOPIFY_TEST_FAIL_AFTER_SCAFFOLD
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
@@ -81,5 +82,16 @@ describe('initializer inputs', () => {
     process.env.CREATE_CONVEX_SHOPIFY_TEST_REF = 'b'.repeat(40)
     await expect(main(['--name', 'Failed App', '--directory', target, '--yes', '--no-install', '--no-setup'])).rejects.toThrow('missing @convex-dev/shopify')
     expect(existsSync(target)).toBe(false)
+  })
+
+  test('preserves a resumable app when installation or setup fails', async () => {
+    const { temporary, archive } = fixtureArchive()
+    const target = join(temporary, 'resumable-app')
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE = archive
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_REF = 'c'.repeat(40)
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_FAIL_AFTER_SCAFFOLD = '1'
+    await expect(main(['--name', 'Resumable App', '--directory', target, '--yes', '--no-install', '--no-setup'])).rejects.toThrow('post-scaffold failure')
+    expect(existsSync(join(target, 'package.json'))).toBe(true)
+    expect(existsSync(join(target, '.git'))).toBe(true)
   })
 })

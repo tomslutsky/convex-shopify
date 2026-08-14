@@ -140,6 +140,7 @@ export async function main(argv = process.argv.slice(2)) {
 
   const temporary = mkdtempSync(join(tmpdir(), 'create-convex-shopify-'))
   let createdTarget = false
+  let resumableTarget = false
   try {
     const archive = join(temporary, 'repository.tar.gz')
     const extracted = join(temporary, 'repository')
@@ -158,11 +159,14 @@ export async function main(argv = process.argv.slice(2)) {
     const packagePath = join(target, 'package.json')
     writeFileSync(packagePath, rewriteTemplatePackage(readFileSync(packagePath, 'utf8'), appName, resolvedRef))
     run('git', ['init', '-q', '-b', 'main'], target)
+    resumableTarget = true
+    if (process.env.CREATE_CONVEX_SHOPIFY_TEST_FAIL_AFTER_SCAFFOLD === '1') throw new Error('Injected post-scaffold failure')
     if (options.install) run('npm', ['install'], target)
     if (options.setup && options.install) run('npm', ['run', 'setup', '--', ...(options.yes ? ['--yes'] : [])], target)
     else if (options.setup) process.stdout.write('Skipping setup because dependencies were not installed. Run npm install && npm run setup later.\n')
   } catch (error) {
-    if (createdTarget) rmSync(target, { recursive: true, force: true })
+    if (createdTarget && !resumableTarget) rmSync(target, { recursive: true, force: true })
+    else if (resumableTarget) process.stderr.write(`\nThe generated app was kept at ${target}. Fix the reported issue, then run npm install and npm run setup there.\n`)
     throw error
   } finally {
     rmSync(temporary, { recursive: true, force: true })
