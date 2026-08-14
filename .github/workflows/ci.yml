@@ -18,7 +18,23 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run verify
+      - name: Check Shopify configuration
+        run: npm run config:check --workspace shopify-convex-template
+      - name: Generate Shopify API types
+        run: npm run shopify:codegen --workspace shopify-convex-template
+      - name: Build component package
+        run: npm run build
+      - name: Verify initializer package
+        run: npm run verify:initializer
+      - name: Run tests
+        run: npm run test:all
+      - name: Typecheck component and template
+        run: npm run typecheck && npm run typecheck:example && npm run typecheck --workspace shopify-convex-template
+      - name: Lint template
+        run: npm run lint --workspace shopify-convex-template
+      - name: Build production SPA
+        run: npm run build --workspace shopify-convex-template
+      - name: Check packed component
+        run: npm run pack:check
       - name: Ensure generated artifacts are committed
         run: git diff --exit-code
-

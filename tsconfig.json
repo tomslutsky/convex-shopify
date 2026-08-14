@@ -23,5 +23,5 @@
     "./codegen/**/*.ts",
     "./component/**/*.ts"
   ],
-  "exclude": ["./dist"]
+  "exclude": ["./dist", "./packages/create-convex-shopify"]
 }

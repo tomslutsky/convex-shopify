@@ -1,4 +1,5 @@
 import shopifyComponent from '@convex-dev/shopify/convex.config'
+import staticHosting from '@convex-dev/static-hosting/convex.config'
 import { defineApp } from 'convex/server'
 import { v } from 'convex/values'
 import { SHOPIFY_ADMIN_API_VERSION } from './lib/shopifyConfig'
@@ -27,5 +28,6 @@ app.use(shopifyComponent, {
     SHOPIFY_SCOPES: app.env.SHOPIFY_SCOPES,
   },
 })
+app.use(staticHosting)
 
 export default app

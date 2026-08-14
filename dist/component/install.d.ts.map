@@ -1,1 +1,1 @@
-{"version":3,"file":"install.d.ts","sourceRoot":"","sources":["../../component/install.ts"],"names":[],"mappings":"AASA,eAAO,MAAM,SAAS;;iBAQpB,CAAA;AAEF,eAAO,MAAM,SAAS;;;;;eAG6B,MAAM;cAAY,MAAM;gBAAc,MAAM,GAAG,IAAI;YAAU,OAAO;GA4BrH,CAAA"}
+{"version":3,"file":"install.d.ts","sourceRoot":"","sources":["../../component/install.ts"],"names":[],"mappings":"AASA,eAAO,MAAM,SAAS;;iBAQpB,CAAA;AAEF,eAAO,MAAM,eAAe;;;;eAGuB,OAAO;aAAW,OAAO;YAAU,KAAK,CAAC,MAAM,CAAC;GAEjG,CAAA;AAEF,eAAO,MAAM,SAAS;;;;;eAG6B,MAAM;cAAY,MAAM;gBAAc,MAAM,GAAG,IAAI;YAAU,OAAO;GA4BrH,CAAA"}

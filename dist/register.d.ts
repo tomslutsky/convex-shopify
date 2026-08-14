@@ -17,10 +17,10 @@ declare const _default: {
             refreshTokenIv?: string | undefined;
             refreshTokenExpiresAt?: number | undefined;
             shopDomain: string;
+            scopes: string;
             encryptedAccessToken: string;
             tokenIv: string;
             tokenKeyVersion: string;
-            scopes: string;
             credentialGeneration: number;
             installedAt: number;
             updatedAt: number;
@@ -37,7 +37,7 @@ declare const _default: {
             credentialGeneration: import("convex/values").VFloat64<number, "required">;
             installedAt: import("convex/values").VFloat64<number, "required">;
             updatedAt: import("convex/values").VFloat64<number, "required">;
-        }, "required", "shopDomain" | "encryptedAccessToken" | "tokenIv" | "tokenKeyVersion" | "scopes" | "accessTokenExpiresAt" | "encryptedRefreshToken" | "refreshTokenIv" | "refreshTokenExpiresAt" | "credentialGeneration" | "installedAt" | "updatedAt">, {
+        }, "required", "shopDomain" | "scopes" | "encryptedAccessToken" | "tokenIv" | "tokenKeyVersion" | "accessTokenExpiresAt" | "encryptedRefreshToken" | "refreshTokenIv" | "refreshTokenExpiresAt" | "credentialGeneration" | "installedAt" | "updatedAt">, {
             by_shopDomain: ["shopDomain", "_creationTime"];
         }, {}, {}>;
         webhookDeliveries: import("convex/server").TableDefinition<import("convex/values").VObject<{

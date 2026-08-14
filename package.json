@@ -6,7 +6,8 @@
   "type": "module",
   "sideEffects": false,
   "workspaces": [
-    "template"
+    "template",
+    "packages/create-convex-shopify"
   ],
   "files": [
     "dist",
@@ -58,9 +59,10 @@
     "typecheck": "tsc --project ./tsconfig.json",
     "typecheck:example": "tsc --project ./example/tsconfig.json",
     "verify:component": "npm run build && npm run typecheck && npm run typecheck:example && npm test && npm run pack:check",
-    "verify": "npm run verify:component && npm run build --workspace shopify-convex-template && npm run test --workspace shopify-convex-template",
+    "verify": "npm run verify:component && npm run verify:initializer && npm run build --workspace shopify-convex-template && npm run test --workspace shopify-convex-template",
     "test": "vitest run --config ./vitest.config.ts",
     "test:all": "npm test && npm run test --workspace shopify-convex-template",
+    "verify:initializer": "npm run typecheck --workspace create-convex-shopify && npm run test --workspace create-convex-shopify && npm run build --workspace create-convex-shopify && npm run pack:check --workspace create-convex-shopify",
     "pack:check": "node ./scripts/check-packed-package.mjs"
   },
   "peerDependencies": {

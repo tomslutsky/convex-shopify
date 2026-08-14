@@ -7,11 +7,25 @@ import {
 } from './lib/compliance'
 import { webhookTopicValidator } from './lib/deliveries'
 import { uninstallStore } from './uninstall'
+import { shopify } from './lib/shopifyApp'
 import type { WebhookHandler, WebhookTopic } from './lib/deliveries'
+
+const reconcileScopes: WebhookHandler = async (ctx, { shopDomain, payload }) => {
+  if (!payload || typeof payload !== 'object' || !Array.isArray((payload as { current?: unknown }).current)) {
+    throw new Error('app/scopes_update payload is missing current scopes')
+  }
+  const scopes = (payload as { current: Array<unknown> }).current
+  if (!scopes.every((scope): scope is string => typeof scope === 'string')) {
+    throw new Error('app/scopes_update current scopes must be strings')
+  }
+  await shopify.installations.reconcileScopes(ctx, { shopDomain, scopes })
+  return { status: 'processed' }
+}
 
 /** Application-owned routing. Delivery reliability lives in the Shopify component. */
 const handlers: Record<WebhookTopic, WebhookHandler> = {
   'app/uninstalled': uninstallStore,
+  'app/scopes_update': reconcileScopes,
   'customers/data_request': handleCustomerDataRequest,
   'customers/redact': handleCustomerRedaction,
   'shop/redact': handleShopRedaction,

@@ -17,4 +17,5 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, 'publ
 export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, 'internal'>>
 export declare const components: {
   shopify: import('@convex-dev/shopify/_generated/component.js').ComponentApi<'shopify'>
+  staticHosting: import('@convex-dev/static-hosting/_generated/component.js').ComponentApi<'staticHosting'>
 }

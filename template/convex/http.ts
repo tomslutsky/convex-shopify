@@ -1,6 +1,7 @@
 import { ShopifyWebhookAuthenticationError } from '@convex-dev/shopify'
+import { registerStaticRoutes } from '@convex-dev/static-hosting'
 import { httpRouter } from 'convex/server'
-import { internal } from './_generated/api'
+import { components, internal } from './_generated/api'
 import { httpAction } from './_generated/server'
 import { corsHeaders, jsonResponse, parseJwk, signAppToken } from './lib/appAuth'
 import { shouldDeduplicateWebhook, toWebhookTopic } from './lib/deliveries'
@@ -67,5 +68,9 @@ http.route({
     return new Response(null, { status: 200 })
   }),
 })
+
+// Keep the stable Shopify auth/webhook routes above at the root. This final
+// catch-all serves static assets and falls back to index.html for SPA routes.
+registerStaticRoutes(http, components.staticHosting)
 
 export default http

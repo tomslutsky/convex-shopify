@@ -39,8 +39,8 @@ async function signature(body: string) {
   return btoa(String.fromCharCode(...signed))
 }
 
-async function webhook(t: ReturnType<typeof backend>, id: string, topic: string, valid = true) {
-  const body = '{}'
+async function webhook(t: ReturnType<typeof backend>, id: string, topic: string, valid = true, payload: unknown = {}) {
+  const body = JSON.stringify(payload)
   return t.fetch('/webhooks/shopify', { method: 'POST', body, headers: {
     'content-type': 'application/json', 'x-shopify-topic': topic,
     'x-shopify-shop-domain': 'alpha.myshopify.com', 'x-shopify-webhook-id': id,
@@ -92,5 +92,34 @@ describe('verified webhook ingress', () => {
     await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({ installed: false })
     expect((await t.run((ctx) => ctx.db.get('stores', storeId)))?.status).toBe('uninstalled')
     expect(await t.run((ctx) => ctx.db.query('storeMembers').take(10))).toEqual([])
+  })
+
+  test('scope updates reconcile granted scopes idempotently', async () => {
+    vi.useFakeTimers()
+    const t = backend()
+    await t.mutation(componentMutation('installations/upsert'), {
+      shopDomain: 'alpha.myshopify.com', scopes: 'read_products',
+      encryptedAccessToken: 'ciphertext', tokenIv: 'iv', tokenKeyVersion: 'v1',
+    })
+
+    const payload = { id: 1234, previous: ['read_products'], current: ['write_products', 'read_orders'], updated_at: '2026-08-14T00:00:00Z' }
+    expect((await webhook(t, 'scopes-1', 'app/scopes_update', true, payload)).status).toBe(200)
+    await drain(t)
+    await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({
+      installed: true,
+      scopes: ['read_orders', 'write_products'],
+      missingScopes: [],
+    })
+
+    expect((await webhook(t, 'scopes-2', 'app/scopes_update', true, payload)).status).toBe(200)
+    await drain(t)
+    await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({
+      installed: true,
+      scopes: ['read_orders', 'write_products'],
+      missingScopes: [],
+    })
+    await expect(t.mutation(componentMutation('install/reconcileScopes'), {
+      shopDomain: 'alpha.myshopify.com', scopes: ['read_orders', 'write_products'],
+    })).resolves.toEqual({ installed: true, changed: false, scopes: ['read_orders', 'write_products'] })
   })
 })

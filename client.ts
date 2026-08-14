@@ -454,6 +454,16 @@ export function shopifyApp<TName extends string | undefined>(
   }
 
   return {
+    installations: {
+      reconcileScopes: async (
+        ctx: MutationCtx,
+        args: { shopDomain: string; scopes: Array<string> },
+      ): Promise<{ installed: boolean; changed: boolean; scopes: Array<string> }> =>
+        await ctx.runMutation(component.install.reconcileScopes, {
+          shopDomain: normalizeShopDomain(args.shopDomain),
+          scopes: args.scopes,
+        }),
+    },
     authenticate: {
       admin: async (
         ctx: ActionCtx,

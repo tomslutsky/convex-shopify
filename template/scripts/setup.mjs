@@ -57,6 +57,7 @@ try {
   run('npm', ['run', 'config:check'])
   if (!dryRun) run('npm', ['run', 'setup:check'], { allowFailure: true })
   console.log('\nSetup finished. Start the embedded app with:\n\n  npx shopify app dev --config development\n')
+  console.log('For production, follow docs/OPERATIONS.md. The reviewed flow deploys Convex first, then publishes dist/client with npm run publish:static.\n')
 } finally {
   rl.close()
 }

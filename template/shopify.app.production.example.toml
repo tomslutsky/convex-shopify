@@ -12,7 +12,7 @@ scopes = "read_products"
 api_version = "2026-07"
 
 [[webhooks.subscriptions]]
-topics = ["app/uninstalled"]
+topics = ["app/uninstalled", "app/scopes_update"]
 uri = "/webhooks/shopify"
 
 [[webhooks.subscriptions]]

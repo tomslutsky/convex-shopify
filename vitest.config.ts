@@ -4,6 +4,6 @@ export default defineConfig({
   test: {
     environment: 'edge-runtime',
     include: ['./**/*.test.ts'],
-    exclude: ['./dist/**', './example/**', './template/**', './node_modules/**'],
+    exclude: ['./dist/**', './example/**', './template/**', './packages/create-convex-shopify/**', './node_modules/**'],
   },
 })

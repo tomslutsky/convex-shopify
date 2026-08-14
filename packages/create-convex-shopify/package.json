@@ -1,0 +1,39 @@
+{
+  "name": "create-convex-shopify",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Create a Shopify app backed and hosted by Convex.",
+  "type": "module",
+  "bin": {
+    "create-convex-shopify": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc --project tsconfig.build.json",
+    "typecheck": "tsc --project tsconfig.json",
+    "test": "vitest run",
+    "pack:check": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomslutsky/convex-shopify.git",
+    "directory": "packages/create-convex-shopify"
+  },
+  "keywords": [
+    "convex",
+    "shopify",
+    "initializer"
+  ],
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^4.1.10"
+  }
+}

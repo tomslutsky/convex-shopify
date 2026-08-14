@@ -10,7 +10,14 @@ Requires Node.js 22.18 or newer. The App Home UI uses Shopify's CDN-hosted App B
 curl -fsSL https://raw.githubusercontent.com/tomslutsky/convex-shopify/main/template/create.sh | bash
 ```
 
-The initializer lives beside the component in this monorepo, so both are versioned together.
+The public repository is a monorepo. The TypeScript initializer lives in the
+`create-convex-shopify` workspace; the curl command is only a compatibility
+launcher for its committed build. The initializer downloads only `template/`,
+resolves branches to immutable commits, and rewrites the monorepo-only `file:..`
+component dependency to that same public Git revision. No GitHub credentials
+are required. The initializer workspace is not yet published to npm; after the
+repository's licensing and npm-release decisions, it can also provide
+`npm create convex-shopify@latest`.
 The no-argument path is an interactive wizard: choose the app name, then let it
 download this template, install dependencies, link Shopify, select a fresh
 Convex project, generate protected keys, configure secrets, and run codegen.
@@ -33,6 +40,7 @@ tag `v0.2.0`; nothing is published to an npm registry. See
 - A typed inline `#graphql` shop identity example.
 - HMAC-verified webhooks, durable webhook-ID deduplication, uninstall cleanup, and explicit compliance contracts.
 - Deterministic negative security tests and configuration consistency checks.
+- Convex static hosting with SPA deep-link fallback and stable root-level Shopify endpoints.
 
 ## Configuration
 
@@ -40,7 +48,17 @@ The Shopify Admin API version and runtime scopes live in `convex/lib/shopifyConf
 
 After Shopify CLI links the development app, the setup wizard synchronizes the template's scopes and webhook subscriptions into the generated named configuration. Run `npm run config:sync` if you relink outside the wizard.
 
+The committed `.vscode/mcp.json` starts Shopify's Dev MCP server for this workspace. Agent instructions in `AGENTS.md` scope it to Shopify APIs, configuration, webhooks, App Bridge, and Polaris work; it is not a general-purpose project tool. Other MCP-capable clients can use the same `npx -y @shopify/dev-mcp@latest` command in their project-level configuration.
+
 The frontend follows Shopify's current React model: React and TanStack own application state and routing, Polaris Web Components provide the App Home UI, and `@shopify/app-bridge-react` provides React access to App Bridge APIs such as toasts, modals, and resource pickers. No legacy App Bridge provider or deprecated Polaris React package is needed.
+
+TanStack Start is deliberately configured as an SPA. The default template has no SSR or TanStack server functions: put HTTP endpoints in `convex/http.ts` and all queries, mutations, actions, storage, and scheduled work in Convex.
+
+## Production hosting
+
+After reviewing the target deployment, deploy the backend with `npm run deploy:convex`, then build and atomically upload the SPA with `npm run publish:static`. The latter runs the production Vite build with `VITE_CONVEX_URL` set for the selected production deployment and uploads the static `dist/client/` output with SPA fallback enabled. It does not upload TanStack's build-only server output or change Shopify configuration.
+
+The resulting app URL is `https://<production-deployment-name>.convex.site`. Copy the production example to the ignored `shopify.app.production.toml`, replace `application_url` with that hosted URL, and keep the webhook URI `/webhooks/shopify`; Shopify resolves it against the application URL. Link and deploy the named Shopify production configuration only during an approved release. See [operations](docs/OPERATIONS.md).
 
 Run `npm run auth:keys` once per environment. It creates an untracked, mode-`0600` file and never prints private material. Delete the local file after setting the Convex environment values. See [environment reference](docs/ENVIRONMENT.md).
 

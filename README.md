@@ -5,26 +5,32 @@ Shopify's official React Router server package. It provides Shopify request
 authentication, encrypted expiring offline sessions, Admin GraphQL, webhook
 authentication, and operational credential rotation.
 
-The package is private at `0.2.0` while developed in this repository. It can be
-packed and consumed locally but must not be published yet.
+This is a public monorepo. The component package is marked `private: true`, so
+it is not published to npm; it is consumed from this public Git repository.
 
 The canonical application starter lives in the `template` npm workspace. A
 single root install links it to this component and `npm run verify` validates
 the component package, packed-consumer boundary, and template together.
 
+The `create-convex-shopify` workspace contains the TypeScript-based
+initializer for extracting `template/` from this monorepo. It pins branch-based
+creation to an immutable commit and rewrites the template's local workspace
+dependency to that same public Git revision. Like the component, the initializer
+is not yet published to npm; `template/create.sh` is its thin public launcher.
+
 ## Install the component
 
-Until an intentional package-publication review, install from the private
-GitHub repository using a verified tag or immutable commit:
+Until an intentional npm-publication review, install from the public GitHub
+repository using a verified tag or immutable commit:
 
 ```sh
-npm install 'git+ssh://git@github.com/OWNER/convex-shopify.git#v0.2.0'
+npm install 'git+https://github.com/tomslutsky/convex-shopify.git#v0.2.0'
 ```
 
-The installing developer or CI runner must have SSH access to the private
-repository. The repository commits verified `dist/` artifacts, so installation
-does not depend on a sibling checkout or a Convex deployment. See
-`VERSIONING.md` for the distribution contract.
+No GitHub credentials or deploy key are required. The repository commits
+verified `dist/` artifacts, so installation does not depend on a sibling
+checkout or a Convex deployment. See `VERSIONING.md` for the distribution
+contract.
 
 ```ts
 // convex/convex.config.ts
@@ -291,7 +297,8 @@ npm pack --dry-run
 ## Remaining release decisions
 
 - Choose an open-source license; the repository currently establishes none.
-- Remove `private: true` only during an intentional publication and licensing
-  review. GitHub-only installation is the supported distribution path today.
+- Remove the package's `private: true` only during an intentional npm
+  publication and licensing review. Public-GitHub installation is the
+  supported distribution path today.
 - Establish package ownership, changelog, support policy, and Convex peer-version
   policy.

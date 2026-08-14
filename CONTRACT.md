@@ -108,6 +108,6 @@ directly. Package upgrades and credential-key rotation are documented in
 
 The ESM package exports the root facade and types, separate `./partner` and
 `./pagination` entry points, component config and generated API entry points,
-the `./test` registration helper, and the `convex-shopify` CLI. It is currently
-private at version `0.1.0`; publication and licensing remain explicit release
-decisions.
+the `./test` registration helper, and the `convex-shopify` CLI. The public
+monorepo currently keeps the package unpublished at version `0.2.0` via
+`private: true`; npm publication and licensing remain explicit release decisions.

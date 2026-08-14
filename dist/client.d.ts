@@ -240,6 +240,16 @@ export type ShopifyWebhookRequest = {
  * Credentials remain component-private; all returned sessions are sanitized.
  */
 export declare function shopifyApp<TName extends string | undefined>(options: ShopifyAppOptions<TName>): {
+    installations: {
+        reconcileScopes: (ctx: MutationCtx, args: {
+            shopDomain: string;
+            scopes: Array<string>;
+        }) => Promise<{
+            installed: boolean;
+            changed: boolean;
+            scopes: Array<string>;
+        }>;
+    };
     authenticate: {
         admin: (ctx: ActionCtx, args: {
             sessionToken: string;

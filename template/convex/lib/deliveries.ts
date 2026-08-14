@@ -3,6 +3,7 @@ import type { MutationCtx } from '../_generated/server'
 
 export const webhookTopics = [
   'app/uninstalled',
+  'app/scopes_update',
   'customers/data_request',
   'customers/redact',
   'shop/redact',
@@ -12,6 +13,7 @@ export type WebhookTopic = (typeof webhookTopics)[number]
 
 const webhookPolicies: Record<WebhookTopic, { deduplicate: boolean }> = {
   'app/uninstalled': { deduplicate: true },
+  'app/scopes_update': { deduplicate: true },
   'customers/data_request': { deduplicate: true },
   'customers/redact': { deduplicate: true },
   'shop/redact': { deduplicate: true },
@@ -37,6 +39,7 @@ export type WebhookHandler = (
 
 const shopifyTopicMap = {
   APP_UNINSTALLED: 'app/uninstalled',
+  APP_SCOPES_UPDATE: 'app/scopes_update',
   CUSTOMERS_DATA_REQUEST: 'customers/data_request',
   CUSTOMERS_REDACT: 'customers/redact',
   SHOP_REDACT: 'shop/redact',

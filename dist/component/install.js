@@ -14,6 +14,11 @@ export const uninstall = mutation({
         return null;
     },
 });
+export const reconcileScopes = mutation({
+    args: { shopDomain: v.string(), scopes: v.array(v.string()) },
+    returns: v.object({ installed: v.boolean(), changed: v.boolean(), scopes: v.array(v.string()) }),
+    handler: async (ctx, args) => await ctx.runMutation(internal.installations.reconcileScopes, args),
+});
 export const reencrypt = action({
     args: { cursor: v.optional(v.union(v.string(), v.null())), batchSize: v.optional(v.number()), dryRun: v.optional(v.boolean()) },
     returns: v.object({ processed: v.number(), migrated: v.number(), nextCursor: v.union(v.string(), v.null()), isDone: v.boolean() }),

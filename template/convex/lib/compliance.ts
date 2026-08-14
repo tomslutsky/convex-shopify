@@ -1,3 +1,5 @@
+import type { WebhookHandler } from './deliveries'
+
 /**
  * Application-owned compliance contract.
  *
@@ -26,4 +28,3 @@ export const handleShopRedaction: WebhookHandler = () => ({
   status: 'action_required',
   requirement: complianceContract['shop/redact'],
 })
-import type { WebhookHandler } from './deliveries'
