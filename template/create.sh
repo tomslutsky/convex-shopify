@@ -50,7 +50,11 @@ if [[ -n "$script_source" && "$script_source" != /dev/fd/* ]]; then
   repository_cli="$(cd "$(dirname "$script_source")/.." 2>/dev/null && pwd)/packages/create-convex-shopify/dist/cli.js"
 fi
 if [[ -f "$repository_cli" ]]; then
-  node "$repository_cli" "${arguments[@]}" --template-ref "$resolved_ref"
+  if ((${#arguments[@]})); then
+    node "$repository_cli" "${arguments[@]}" --template-ref "$resolved_ref"
+  else
+    node "$repository_cli" --template-ref "$resolved_ref"
+  fi
 else
   initializer_tmp="$(mktemp "${TMPDIR:-/tmp}/create-convex-shopify.XXXXXX.mjs")"
   checksum_tmp="${initializer_tmp}.sha256"
@@ -60,5 +64,9 @@ else
   curl -fsSL "$base_url/cli.js" -o "$initializer_tmp"
   curl -fsSL "$base_url/cli.js.sha256" -o "$checksum_tmp"
   verify_checksum "$initializer_tmp" "$checksum_tmp"
-  node "$initializer_tmp" "${arguments[@]}" --template-ref "$resolved_ref"
+  if ((${#arguments[@]})); then
+    node "$initializer_tmp" "${arguments[@]}" --template-ref "$resolved_ref"
+  else
+    node "$initializer_tmp" --template-ref "$resolved_ref"
+  fi
 fi

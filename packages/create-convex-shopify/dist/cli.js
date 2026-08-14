@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, createReadStream, createWriteStream, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -97,14 +97,21 @@ async function download(url, destination) {
     writeFileSync(destination, Buffer.from(await response.arrayBuffer()), { mode: 0o600 });
 }
 async function promptForName(defaultValue) {
-    if (!process.stdin.isTTY)
+    const useControllingTerminal = !process.stdin.isTTY && existsSync('/dev/tty');
+    if (!process.stdin.isTTY && !useControllingTerminal)
         throw new Error('Interactive input requires a terminal. Pass --name and --yes for automation.');
-    const readline = createInterface({ input: process.stdin, output: process.stdout });
+    const input = useControllingTerminal ? createReadStream('/dev/tty') : process.stdin;
+    const output = useControllingTerminal ? createWriteStream('/dev/tty') : process.stdout;
+    const readline = createInterface({ input, output });
     try {
         return (await readline.question(`App name [${defaultValue}]: `)).trim() || defaultValue;
     }
     finally {
         readline.close();
+        if (useControllingTerminal) {
+            input.destroy();
+            output.end();
+        }
     }
 }
 export async function main(argv = process.argv.slice(2)) {
