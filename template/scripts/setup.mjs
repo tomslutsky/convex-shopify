@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { createReadStream, createWriteStream, existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, createReadStream, createWriteStream, existsSync, mkdtempSync, openSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
@@ -33,8 +33,9 @@ if (flags.has('--check')) {
 
 const useControllingTerminal = !process.stdin.isTTY && Boolean(process.stdout.isTTY) && existsSync('/dev/tty')
 if (!assumeYes && !process.stdin.isTTY && !useControllingTerminal) fail('Interactive setup requires a terminal. Re-run npm run setup in a terminal or pass --yes for automation.')
-const promptInput = useControllingTerminal ? createReadStream('/dev/tty') : process.stdin
-const promptOutput = useControllingTerminal ? createWriteStream('/dev/tty') : process.stdout
+const controllingTerminalFd = useControllingTerminal ? openSync('/dev/tty', 'r+') : null
+const promptInput = controllingTerminalFd === null ? process.stdin : createReadStream('/dev/tty', { fd: controllingTerminalFd, autoClose: false })
+const promptOutput = controllingTerminalFd === null ? process.stdout : createWriteStream('/dev/tty', { fd: controllingTerminalFd, autoClose: false })
 const rl = createInterface({ input: promptInput, output: promptOutput })
 
 try {
@@ -66,7 +67,8 @@ try {
   rl.close()
   if (useControllingTerminal) {
     promptInput.destroy()
-    promptOutput.end()
+    promptOutput.destroy()
+    closeSync(controllingTerminalFd)
   }
 }
 
@@ -132,7 +134,7 @@ function pullShopifyApiSecret() {
     // documents that it creates one.
     writeFileSync(envFile, '', { mode: 0o600 })
     const result = spawnSync('npx', ['shopify', 'app', 'env', 'pull', '--config', 'development', '--env-file', envFile], {
-      stdio: ['inherit', 'pipe', 'pipe'],
+      stdio: [controllingTerminalFd ?? 'inherit', 'pipe', 'pipe'],
       encoding: 'utf8',
     })
     if (result.error || result.status !== 0 || !existsSync(envFile)) return null
@@ -183,7 +185,9 @@ function run(command, args, options = {}) {
     return
   }
   const result = spawnSync(command, args, {
-    stdio: options.input === undefined ? 'inherit' : ['pipe', 'inherit', 'inherit'],
+    stdio: options.input === undefined
+      ? [controllingTerminalFd ?? 'inherit', 'inherit', 'inherit']
+      : ['pipe', 'inherit', 'inherit'],
     input: options.input,
     encoding: 'utf8',
   })
