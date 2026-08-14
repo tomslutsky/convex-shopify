@@ -1,12 +1,15 @@
 /// <reference types="vite/client" />
 import { register as registerShopify } from '@convex-dev/shopify/test'
-import { register as registerWorkpool } from '@convex-dev/workpool/test'
 import { convexTest } from 'convex-test'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import schema from './schema'
 import type { FunctionReference } from 'convex/server'
 
 const modules = import.meta.glob('./**/*.ts')
+const workpoolTestEntry = ['@convex-dev', 'workpool', 'test'].join('/')
+const { register: registerWorkpool } = await import(/* @vite-ignore */ workpoolTestEntry) as {
+  register: (test: never, name?: string) => void
+}
 const secret = 'test-only-webhook-secret'
 const childReference = Symbol.for('toReferencePath')
 
