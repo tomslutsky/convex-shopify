@@ -55,14 +55,16 @@ describe('short-lived app JWT', () => {
   })
 
   test('accepts its own token and rejects a forged token', async () => {
+    const convexSiteUrl = process.env.CONVEX_SITE_URL
+    if (!convexSiteUrl) throw new Error('CONVEX_SITE_URL is required for this test')
     const publicKey = await importJWK(parseJwk('APP_AUTH_PUBLIC_JWK'), 'ES256')
     const token = await signAppToken('alpha.myshopify.com', '42')
-    await expect(jwtVerify(token, publicKey, { issuer: process.env.CONVEX_SITE_URL, audience: 'convex' })).resolves.toMatchObject({ payload: { shopDomain: 'alpha.myshopify.com' } })
+    await expect(jwtVerify(token, publicKey, { issuer: convexSiteUrl, audience: 'convex' })).resolves.toMatchObject({ payload: { shopDomain: 'alpha.myshopify.com' } })
 
     const attacker = await generateKeyPair('ES256')
     const forged = await new (await import('jose')).SignJWT({ shopDomain: 'alpha.myshopify.com', shopifyUserId: '42' })
-      .setProtectedHeader({ alg: 'ES256', kid: 'app-auth-1' }).setIssuer(process.env.CONVEX_SITE_URL!).setAudience('convex').setSubject('alpha.myshopify.com:42').setExpirationTime('5m').sign(attacker.privateKey)
-    await expect(jwtVerify(forged, publicKey, { issuer: process.env.CONVEX_SITE_URL, audience: 'convex' })).rejects.toThrow()
+      .setProtectedHeader({ alg: 'ES256', kid: 'app-auth-1' }).setIssuer(convexSiteUrl).setAudience('convex').setSubject('alpha.myshopify.com:42').setExpirationTime('5m').sign(attacker.privateKey)
+    await expect(jwtVerify(forged, publicKey, { issuer: convexSiteUrl, audience: 'convex' })).rejects.toThrow()
   })
 
   test('rejects private material in the public JWKS key', () => {
