@@ -1,15 +1,12 @@
 /// <reference types="vite/client" />
 import { register as registerShopify } from '@convex-dev/shopify/test'
+import { register as registerWorkpool } from '@convex-dev/workpool/test'
 import { convexTest } from 'convex-test'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import batchWorkerSchema from '../../node_modules/@convex-dev/batch-worker/dist/component/schema.js'
-import workpoolSchema from '../../node_modules/@convex-dev/workpool/dist/component/schema.js'
 import schema from './schema'
 import type { FunctionReference } from 'convex/server'
 
 const modules = import.meta.glob('./**/*.ts')
-const workpoolModules = import.meta.glob('../../node_modules/@convex-dev/workpool/dist/component/**/*.js')
-const batchWorkerModules = import.meta.glob('../../node_modules/@convex-dev/batch-worker/dist/component/**/*.js')
 const secret = 'test-only-webhook-secret'
 const childReference = Symbol.for('toReferencePath')
 
@@ -24,8 +21,7 @@ function componentQuery(path: string): FunctionReference<'query', 'public'> {
 function backend() {
   const t = convexTest(schema as never, modules)
   registerShopify(t as never)
-  t.registerComponent('shopify/webhookWorkpool', workpoolSchema, workpoolModules)
-  t.registerComponent('shopify/webhookWorkpool/batchWorker', batchWorkerSchema, batchWorkerModules)
+  registerWorkpool(t as never, 'shopify/webhookWorkpool')
   return t
 }
 
