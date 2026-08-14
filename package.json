@@ -75,7 +75,8 @@
     "jose": "^6.2.8"
   },
   "optionalDependencies": {
-    "@rolldown/binding-linux-x64-gnu": "1.2.4"
+    "@rolldown/binding-linux-x64-gnu": "1.2.4",
+    "lightningcss-linux-x64-gnu": "1.33.0"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
