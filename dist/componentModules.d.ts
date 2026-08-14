@@ -6,6 +6,7 @@ export declare const componentModules: {
     './component/admin.js': () => Promise<typeof import("./component/admin.js")>;
     './component/auth.js': () => Promise<typeof import("./component/auth.js")>;
     './component/convex.config.js': () => Promise<typeof import("./component/convex.config.js")>;
+    './component/crons.js': () => Promise<typeof import("./component/crons.js")>;
     './component/install.js': () => Promise<typeof import("./component/install.js")>;
     './component/installations.js': () => Promise<typeof import("./component/installations.js")>;
     './component/lib/adminClient.js': () => Promise<typeof import("./component/lib/adminClient.js")>;

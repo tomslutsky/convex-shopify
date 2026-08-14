@@ -8,6 +8,10 @@ authentication, and operational credential rotation.
 The package is private at `0.1.0` while developed in this repository. It can be
 packed and consumed locally but must not be published yet.
 
+The canonical application starter lives in the `template` npm workspace. A
+single root install links it to this component and `npm run verify` validates
+the component package, packed-consumer boundary, and template together.
+
 ## Install the component
 
 Until an intentional package-publication review, install from the private
@@ -140,14 +144,13 @@ Use the native `Request`, as in Shopify's template:
 
 ```ts
 try {
-  const { shop, topic, payload, webhookId, session } =
-    await authenticate.webhook(ctx, request)
+  const { shop, topic, payload, webhookId, rawBody, session } =
+    await shopify.authenticate.webhook(ctx, request)
 
-  if (topic === 'APP_UNINSTALLED') {
-    await sessionStorage.deleteSessionsForShop(ctx, shop)
-  }
-
-  // Transactionally deduplicate webhookId and route payload in app code.
+  await shopify.webhooks.accept(ctx, { shop, topic, payload, webhookId, rawBody, session }, {
+    handler: internal.webhooks.process,
+    deduplicate: true,
+  })
   return new Response(null, { status: 200 })
 } catch (error) {
   return new Response('Invalid Shopify webhook', { status: 401 })
@@ -155,8 +158,9 @@ try {
 ```
 
 HMAC is verified against exact raw bytes before JSON parsing or trusting shop,
-topic, and webhook ID headers. Persistent deduplication and bounded retention
-remain app-owned.
+topic, and webhook ID headers. Accepted deliveries are stored in the component,
+processed through a retrying workpool, and retained for bounded failure
+inspection and replay. Topic routing and handler idempotency remain app-owned.
 
 ## Session states and errors
 

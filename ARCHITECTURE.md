@@ -14,6 +14,8 @@ application integration. It is a Convex component, not a complete Shopify app.
 - Send Shopify Admin GraphQL operations and return the response envelope plus
   request, API-version, cost, and throttle metadata.
 - Verify webhook HMACs over the exact request bytes before any JSON parsing.
+- Persist verified webhook deliveries, deduplicate them, retry app callbacks,
+  and retain terminal state for inspection and replay.
 - Return sanitized session metadata without exposing credentials.
 - Rotate encryption keys in bounded, resumable batches.
 - Optionally call the Shopify Partner GraphQL API using organization-owned
@@ -22,8 +24,8 @@ application integration. It is a Convex component, not a complete Shopify app.
 ## Parent-application behavior
 
 The consuming app authenticates its own users, derives their authorized store
-server-side, mounts HTTP routes, persists webhook delivery IDs, implements
-compliance processing, and owns every domain table and business invariant.
+server-side, mounts HTTP routes, selects webhook deduplication policy,
+implements topic handlers, and owns every domain table and business invariant.
 Component functions cannot access parent `ctx.auth`; app wrappers must perform
 authorization before passing a shop domain across the boundary.
 
@@ -38,5 +40,6 @@ An embedded request obtains an App Bridge session token. An app action calls
 offline credentials, and returns a sanitized session and Admin client. For a
 background job, app code first authorizes a store record and then calls
 `unauthenticated.admin`. A webhook reaches an app-owned HTTP route, which calls
-`authenticate.webhook`, deduplicates the verified delivery, and handles the
-topic using app-owned data.
+`authenticate.webhook`, then submits the verified delivery and an app-owned
+handler to `webhooks.accept`. The component durably executes the callback and
+records terminal state; the callback handles the topic using app-owned data.

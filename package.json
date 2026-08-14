@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "sideEffects": false,
+  "workspaces": ["template"],
   "files": [
     "dist",
     "README.md",
@@ -16,46 +17,25 @@
   ],
   "exports": {
     "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/client.d.ts",
-      "default": "./dist/client.js"
-    },
-    "./partner": {
-      "types": "./dist/partner.d.ts",
-      "default": "./dist/partner.js"
-    },
-    "./pagination": {
-      "types": "./dist/pagination.d.ts",
-      "default": "./dist/pagination.js"
-    },
-    "./test": {
-      "types": "./dist/test.d.ts",
-      "default": "./dist/test.js"
-    },
-    "./_generated/component.js": {
-      "types": "./dist/component/_generated/component.d.ts",
-      "default": "./dist/component/_generated/component.js"
-    },
-    "./convex.config": {
-      "types": "./dist/component/convex.config.d.ts",
-      "default": "./dist/component/convex.config.js"
-    },
-    "./convex.config.js": {
-      "types": "./dist/component/convex.config.d.ts",
-      "default": "./dist/component/convex.config.js"
-    }
+    ".": { "types": "./dist/client.d.ts", "default": "./dist/client.js" },
+    "./partner": { "types": "./dist/partner.d.ts", "default": "./dist/partner.js" },
+    "./pagination": { "types": "./dist/pagination.d.ts", "default": "./dist/pagination.js" },
+    "./test": { "types": "./dist/test.d.ts", "default": "./dist/test.js" },
+    "./_generated/component.js": { "types": "./dist/component/_generated/component.d.ts", "default": "./dist/component/_generated/component.js" },
+    "./convex.config": { "types": "./dist/component/convex.config.d.ts", "default": "./dist/component/convex.config.js" },
+    "./convex.config.js": { "types": "./dist/component/convex.config.d.ts", "default": "./dist/component/convex.config.js" }
   },
-  "bin": {
-    "convex-shopify": "./dist/codegen/cli.js"
-  },
+  "bin": { "convex-shopify": "./dist/codegen/cli.js" },
   "scripts": {
     "build:codegen": "node ./scripts/component-codegen.mjs",
     "build:package": "node ./scripts/build-package.mjs",
     "build": "npm run build:codegen && npm run build:package",
     "typecheck": "tsc --project ./tsconfig.json",
     "typecheck:example": "tsc --project ./example/tsconfig.json",
-    "verify": "npm run build && npm run typecheck && npm run typecheck:example && npm test && npm run pack:check",
+    "verify:component": "npm run build && npm run typecheck && npm run typecheck:example && npm test && npm run pack:check",
+    "verify": "npm run verify:component && npm run build --workspace shopify-convex-template && npm run test --workspace shopify-convex-template",
     "test": "vitest run --config ./vitest.config.ts",
+    "test:all": "npm test && npm run test --workspace shopify-convex-template",
     "pack:check": "node ./scripts/check-packed-package.mjs"
   },
   "peerDependencies": {
@@ -64,6 +44,9 @@
     "graphql": ">=16.0.0 <18.0.0"
   },
   "dependencies": {
+    "@convex-dev/batch-worker": "^0.2.0",
+    "@convex-dev/workpool": "^0.4.9",
+    "convex-helpers": "^0.1.123",
     "jose": "^6.2.8"
   },
   "devDependencies": {
@@ -77,7 +60,5 @@
     "vite": "^8.2.0",
     "vitest": "^4.1.10"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "engines": { "node": ">=22.18" }
 }

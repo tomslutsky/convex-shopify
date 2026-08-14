@@ -1,4 +1,5 @@
 import { print } from 'graphql'
+import { createFunctionHandle } from 'convex/server'
 import { asShopifyCursor } from './pagination.js'
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import type { ComponentApi } from './component/_generated/component.js'
@@ -294,6 +295,29 @@ export type ShopifyWebhookContext = {
   session: ShopifySession | null
 }
 
+export type ShopifyWebhookHandlerArgs = {
+  webhookId: string
+  shopDomain: string
+  topic: string
+  payload: unknown
+}
+
+export type ShopifyWebhookHandler = FunctionReference<
+  'mutation',
+  'internal',
+  ShopifyWebhookHandlerArgs,
+  unknown
+>
+
+export type ShopifyFailedWebhookDelivery = {
+  deliveryId: string
+  webhookId: string
+  shopDomain: string
+  topic: string
+  error: string
+  completedAt: number
+}
+
 export type ShopifyWebhookAuthenticationErrorReason =
   'missing_metadata' | 'invalid_shop_domain' | 'invalid_hmac' | 'invalid_json'
 
@@ -352,6 +376,18 @@ export function shopifyApp<TName extends string | undefined>(
   options: ShopifyAppOptions<TName>,
 ) {
   const { component } = options
+  const webhookComponent = component as unknown as { webhooks: {
+    accept: FunctionReference<'mutation', 'internal', {
+      webhookId: string
+      shopDomain: string
+      topic: string
+      payload: unknown
+      handler: string
+      deduplicate: boolean
+    }, { status: 'accepted' | 'duplicate'; deliveryId: string }>
+    listFailed: FunctionReference<'query', 'internal', { limit?: number }, Array<ShopifyFailedWebhookDelivery>>
+    replay: FunctionReference<'mutation', 'internal', { deliveryId: string }, null>
+  } }
 
   function adminContext(ctx: ActionCtx, shop: string): ShopifyAdminContext {
     const normalizedShop = normalizeShopDomain(shop)
@@ -521,6 +557,33 @@ export function shopifyApp<TName extends string | undefined>(
       },
     },
     sessionStorage,
+    webhooks: {
+      accept: async (
+        ctx: MutationCtx,
+        delivery: ShopifyWebhookContext,
+        options: {
+          handler: ShopifyWebhookHandler
+          deduplicate?: boolean
+        },
+      ) => {
+        const handler = await createFunctionHandle(options.handler)
+        return await ctx.runMutation(webhookComponent.webhooks.accept, {
+          webhookId: delivery.webhookId,
+          shopDomain: delivery.shop,
+          topic: delivery.topic,
+          payload: delivery.payload,
+          handler,
+          deduplicate: options.deduplicate ?? true,
+        })
+      },
+      listFailed: async (
+        ctx: QueryCtx,
+        options: { limit?: number } = {},
+      ): Promise<Array<ShopifyFailedWebhookDelivery>> =>
+        await ctx.runQuery(webhookComponent.webhooks.listFailed, options),
+      replay: async (ctx: MutationCtx, deliveryId: string): Promise<null> =>
+        await ctx.runMutation(webhookComponent.webhooks.replay, { deliveryId }),
+    },
     operations: {
       credentials: {
         rotate: async (

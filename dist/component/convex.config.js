@@ -1,3 +1,4 @@
+import workpool from '@convex-dev/workpool/convex.config';
 import { defineComponent } from 'convex/server';
 import { v } from 'convex/values';
 const component = defineComponent('shopify', {
@@ -14,5 +15,6 @@ const component = defineComponent('shopify', {
         SHOPIFY_PARTNER_API_VERSION: v.optional(v.string()),
     },
 });
+component.use(workpool, { name: 'webhookWorkpool' });
 export default component;
 //# sourceMappingURL=convex.config.js.map

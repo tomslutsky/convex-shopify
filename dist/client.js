@@ -1,4 +1,5 @@
 import { print } from 'graphql';
+import { createFunctionHandle } from 'convex/server';
 import { asShopifyCursor } from './pagination.js';
 export { asShopifyCursor } from './pagination.js';
 /** Read the serializable error payload returned across a Convex boundary. */
@@ -31,6 +32,7 @@ const SHOP_DOMAIN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.myshopify\.com$/;
  */
 export function shopifyApp(options) {
     const { component } = options;
+    const webhookComponent = component;
     function adminContext(ctx, shop) {
         const normalizedShop = normalizeShopDomain(shop);
         const graphql = async (operation, graphqlOptions = {}) => {
@@ -154,6 +156,21 @@ export function shopifyApp(options) {
             },
         },
         sessionStorage,
+        webhooks: {
+            accept: async (ctx, delivery, options) => {
+                const handler = await createFunctionHandle(options.handler);
+                return await ctx.runMutation(webhookComponent.webhooks.accept, {
+                    webhookId: delivery.webhookId,
+                    shopDomain: delivery.shop,
+                    topic: delivery.topic,
+                    payload: delivery.payload,
+                    handler,
+                    deduplicate: options.deduplicate ?? true,
+                });
+            },
+            listFailed: async (ctx, options = {}) => await ctx.runQuery(webhookComponent.webhooks.listFailed, options),
+            replay: async (ctx, deliveryId) => await ctx.runMutation(webhookComponent.webhooks.replay, { deliveryId }),
+        },
         operations: {
             credentials: {
                 rotate: async (ctx, args = {}) => await ctx.runAction(component.install.reencrypt, args),

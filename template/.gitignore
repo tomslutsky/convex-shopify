@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.output/
+dist/
+.convex/
+convex/types/
+.shopify/
+shopify.app.local.toml
+shopify.app.development.toml
+shopify.app.production.toml
+*.tgz
+*.pem

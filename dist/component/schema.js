@@ -22,5 +22,18 @@ export default defineSchema({
         installedAt: v.number(),
         updatedAt: v.number(),
     }).index('by_shopDomain', ['shopDomain']),
+    webhookDeliveries: defineTable({
+        webhookId: v.string(),
+        shopDomain: v.string(),
+        topic: v.string(),
+        payload: v.any(),
+        handler: v.string(),
+        status: v.union(v.literal('pending'), v.literal('succeeded'), v.literal('failed')),
+        workId: v.optional(v.string()),
+        error: v.optional(v.string()),
+        completedAt: v.optional(v.number()),
+    })
+        .index('by_webhookId', ['webhookId'])
+        .index('by_status', ['status']),
 });
 //# sourceMappingURL=schema.js.map

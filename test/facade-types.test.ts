@@ -32,6 +32,16 @@ test('template facade preserves custom mount and TypedDocumentNode inference', a
     const stored = await shopify.sessionStorage.findSessionByShop(ctx, 'example.myshopify.com')
     expectTypeOf(stored).toEqualTypeOf<ShopifySession | null>()
 
+    const handler = null as unknown as Parameters<typeof shopify.webhooks.accept>[2]['handler']
+    const accepted = await shopify.webhooks.accept(ctx, {
+      shop: 'example.myshopify.com', topic: 'PRODUCTS_UPDATE', payload: {},
+      webhookId: 'delivery-1', rawBody: new ArrayBuffer(0), session: null,
+    }, { handler })
+    expectTypeOf(accepted.status).toEqualTypeOf<'accepted' | 'duplicate'>()
+    const failed = await shopify.webhooks.listFailed(ctx)
+    expectTypeOf(failed[0]!.deliveryId).toEqualTypeOf<string>()
+    await shopify.webhooks.replay(ctx, failed[0]!.deliveryId)
+
     // @ts-expect-error variables must match the TypedDocumentNode
     await authenticated.admin.graphqlDocument(shopDocument, { variables: { first: '10' } })
     const invalidDocument = null as unknown as TypedDocumentNode<ShopResult, { when: Date }>

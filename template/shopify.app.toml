@@ -1,0 +1,28 @@
+# Template-safe source of truth. Shopify CLI writes the real client_id to a named
+# local configuration; never commit that generated configuration.
+client_id = "REPLACE_WITH_SHOPIFY_CLIENT_ID"
+name = "Shopify Convex Starter"
+application_url = "https://example.invalid"
+embedded = true
+
+[access_scopes]
+scopes = "read_products"
+optional_scopes = []
+use_legacy_install_flow = false
+
+[webhooks]
+api_version = "2026-07"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/webhooks/shopify"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/webhooks/shopify"
+
+[auth]
+redirect_urls = []
+
+[build]
+automatically_update_urls_on_dev = true

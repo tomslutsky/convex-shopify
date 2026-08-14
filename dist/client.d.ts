@@ -199,6 +199,21 @@ export type ShopifyWebhookContext = {
     rawBody: ArrayBuffer;
     session: ShopifySession | null;
 };
+export type ShopifyWebhookHandlerArgs = {
+    webhookId: string;
+    shopDomain: string;
+    topic: string;
+    payload: unknown;
+};
+export type ShopifyWebhookHandler = FunctionReference<'mutation', 'internal', ShopifyWebhookHandlerArgs, unknown>;
+export type ShopifyFailedWebhookDelivery = {
+    deliveryId: string;
+    webhookId: string;
+    shopDomain: string;
+    topic: string;
+    error: string;
+    completedAt: number;
+};
 export type ShopifyWebhookAuthenticationErrorReason = 'missing_metadata' | 'invalid_shop_domain' | 'invalid_hmac' | 'invalid_json';
 export declare class ShopifyWebhookAuthenticationError extends Error {
     readonly reason: ShopifyWebhookAuthenticationErrorReason;
@@ -240,6 +255,19 @@ export declare function shopifyApp<TName extends string | undefined>(options: Sh
         findSessionByShop: (ctx: QueryCtx, shop: string) => Promise<ShopifySession | null>;
         deleteSession: (ctx: MutationCtx, id: string) => Promise<boolean>;
         deleteSessionsForShop: (ctx: MutationCtx, shop: string) => Promise<boolean>;
+    };
+    webhooks: {
+        accept: (ctx: MutationCtx, delivery: ShopifyWebhookContext, options: {
+            handler: ShopifyWebhookHandler;
+            deduplicate?: boolean;
+        }) => Promise<{
+            status: "accepted" | "duplicate";
+            deliveryId: string;
+        }>;
+        listFailed: (ctx: QueryCtx, options?: {
+            limit?: number;
+        }) => Promise<Array<ShopifyFailedWebhookDelivery>>;
+        replay: (ctx: MutationCtx, deliveryId: string) => Promise<null>;
     };
     operations: {
         credentials: {

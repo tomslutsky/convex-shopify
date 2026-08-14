@@ -8,6 +8,7 @@ export const componentModules = {
     './component/admin.js': () => import('./component/admin.js'),
     './component/auth.js': () => import('./component/auth.js'),
     './component/convex.config.js': () => import('./component/convex.config.js'),
+    './component/crons.js': () => import('./component/crons.js'),
     './component/install.js': () => import('./component/install.js'),
     './component/installations.js': () => import('./component/installations.js'),
     './component/lib/adminClient.js': () => import('./component/lib/adminClient.js'),

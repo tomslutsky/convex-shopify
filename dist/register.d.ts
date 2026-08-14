@@ -40,6 +40,30 @@ declare const _default: {
         }, "required", "shopDomain" | "encryptedAccessToken" | "tokenIv" | "tokenKeyVersion" | "scopes" | "accessTokenExpiresAt" | "encryptedRefreshToken" | "refreshTokenIv" | "refreshTokenExpiresAt" | "credentialGeneration" | "installedAt" | "updatedAt">, {
             by_shopDomain: ["shopDomain", "_creationTime"];
         }, {}, {}>;
+        webhookDeliveries: import("convex/server").TableDefinition<import("convex/values").VObject<{
+            workId?: string | undefined;
+            error?: string | undefined;
+            completedAt?: number | undefined;
+            shopDomain: string;
+            status: "pending" | "succeeded" | "failed";
+            webhookId: string;
+            topic: string;
+            payload: any;
+            handler: string;
+        }, {
+            webhookId: import("convex/values").VString<string, "required">;
+            shopDomain: import("convex/values").VString<string, "required">;
+            topic: import("convex/values").VString<string, "required">;
+            payload: import("convex/values").VAny<any, "required", string>;
+            handler: import("convex/values").VString<string, "required">;
+            status: import("convex/values").VUnion<"pending" | "succeeded" | "failed", [import("convex/values").VLiteral<"pending", "required">, import("convex/values").VLiteral<"succeeded", "required">, import("convex/values").VLiteral<"failed", "required">], "required", never>;
+            workId: import("convex/values").VString<string | undefined, "optional">;
+            error: import("convex/values").VString<string | undefined, "optional">;
+            completedAt: import("convex/values").VFloat64<number | undefined, "optional">;
+        }, "required", "shopDomain" | "status" | "webhookId" | "topic" | "payload" | "handler" | "workId" | "error" | "completedAt" | `payload.${string}`>, {
+            by_webhookId: ["webhookId", "_creationTime"];
+            by_status: ["status", "_creationTime"];
+        }, {}, {}>;
     }, true>;
     modules: {
         './component/_generated/api.js': () => Promise<typeof import("./component/_generated/api.js")>;
@@ -49,6 +73,7 @@ declare const _default: {
         './component/admin.js': () => Promise<typeof import("./component/admin.js")>;
         './component/auth.js': () => Promise<typeof import("./component/auth.js")>;
         './component/convex.config.js': () => Promise<typeof import("./component/convex.config.js")>;
+        './component/crons.js': () => Promise<typeof import("./component/crons.js")>;
         './component/install.js': () => Promise<typeof import("./component/install.js")>;
         './component/installations.js': () => Promise<typeof import("./component/installations.js")>;
         './component/lib/adminClient.js': () => Promise<typeof import("./component/lib/adminClient.js")>;

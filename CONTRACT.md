@@ -13,7 +13,7 @@ verification, and encryption-key rotation. Credentials never cross the
 component boundary.
 
 The parent Convex app owns application-user authentication, shop authorization,
-HTTP routing, webhook processing and deduplication, and all business data. A
+HTTP routing, webhook topic routing and business handlers, and all business data. A
 component cannot inspect the parent app's `ctx.auth`.
 
 ## Supported facade
@@ -55,8 +55,10 @@ must come from an app-owned, authenticated and authorized server workflow.
 `authenticate.webhook` reads the exact request bytes, verifies HMAC before
 parsing JSON or trusting metadata, and returns `shop`, a Shopify-normalized
 topic such as `APP_UNINSTALLED`, `webhookId`,
-`payload`, `rawBody`, and a nullable stored session. Delivery deduplication and
-processing remain app-owned.
+`payload`, `rawBody`, and a nullable stored session. `webhooks.accept` persists
+the verified delivery, deduplicates it when requested, and invokes an app-owned
+internal mutation through a durable retrying workpool. The component records
+terminal failures and exposes bounded inspection and replay operations.
 
 `shopifyApp` is the supported application facade. Lower-level exports exist for
 advanced integration and testing, but are not a second authorization layer.

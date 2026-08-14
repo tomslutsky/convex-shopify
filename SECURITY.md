@@ -25,10 +25,12 @@ secret. Restrict operator actions that invoke credential rotation.
 
 ## Webhooks and GraphQL
 
-The component authenticates a delivery but does not provide persistent
-deduplication. Store Shopify's webhook ID in an app table before applying domain
-writes. GraphQL operation types are compile-time assistance, not runtime
-validation; validate fields used for authorization or financial invariants.
+The component authenticates and durably stores deliveries before dispatch. Apps
+choose whether to deduplicate each topic and must still make handlers idempotent
+because execution can have ambiguous outcomes. Protect app-level wrappers for
+failed-delivery inspection and replay with operator authorization. GraphQL
+operation types are compile-time assistance, not runtime validation; validate
+fields used for authorization or financial invariants.
 
 Report suspected vulnerabilities privately to the repository owner. A public
 security contact has not yet been designated.
