@@ -5,7 +5,7 @@ Shopify's official React Router server package. It provides Shopify request
 authentication, encrypted expiring offline sessions, Admin GraphQL, webhook
 authentication, and operational credential rotation.
 
-The package is private at `0.1.0` while developed in this repository. It can be
+The package is private at `0.2.0` while developed in this repository. It can be
 packed and consumed locally but must not be published yet.
 
 The canonical application starter lives in the `template` npm workspace. A
@@ -18,7 +18,7 @@ Until an intentional package-publication review, install from the private
 GitHub repository using a verified tag or immutable commit:
 
 ```sh
-npm install 'git+ssh://git@github.com/OWNER/convex-shopify.git#v0.1.0'
+npm install 'git+ssh://git@github.com/OWNER/convex-shopify.git#v0.2.0'
 ```
 
 The installing developer or CI runner must have SSH access to the private

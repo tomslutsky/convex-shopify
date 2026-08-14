@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 readonly TEMPLATE_REPOSITORY="tomslutsky/convex-shopify"
-template_ref="v0.1.0"
+template_ref="v0.2.0"
 
 app_name=""
 target_directory=""

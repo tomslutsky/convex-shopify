@@ -13,7 +13,7 @@ is a Git dependency pinned to an immutable commit or verified tag:
 ```json
 {
   "dependencies": {
-    "@convex-dev/shopify": "git+ssh://git@github.com/OWNER/convex-shopify.git#v0.1.0"
+    "@convex-dev/shopify": "git+ssh://git@github.com/OWNER/convex-shopify.git#v0.2.0"
   }
 }
 ```
@@ -23,4 +23,3 @@ to GitHub over SSH (or use an appropriately scoped HTTPS credential). The
 committed `dist/` directory makes installation independent of a sibling
 checkout. Before tagging, run `npm ci && npm run verify`, inspect `npm pack
 --dry-run`, and confirm the generated artifacts are unchanged.
-

@@ -20,7 +20,7 @@ After cloning manually, the same resumable wizard is available as
 Open the generated preview URL through **Shopify Admin → Apps** in your development store. Convex's built-in `CONVEX_SITE_URL` is the app-token issuer and JWKS origin, so initial project creation has no auth-environment-variable chicken-and-egg. The wizard copies the linked app's public client ID and securely transfers its API secret from Shopify CLI to Convex without displaying or retaining the secret.
 
 The component is consumed directly from a public GitHub commit behind verified
-tag `v0.1.0`; nothing is published to an npm registry. See
+tag `v0.2.0`; nothing is published to an npm registry. See
 [GitHub dependency](docs/GITHUB_DEPENDENCY.md).
 
 ## What is included
