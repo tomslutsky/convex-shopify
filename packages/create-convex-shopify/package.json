@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "npm run clean && tsc --project tsconfig.build.json",
+    "build": "npm run clean && tsc --project tsconfig.build.json && node scripts/checksum.mjs",
     "typecheck": "tsc --project tsconfig.json",
     "test": "vitest run",
     "pack:check": "npm pack --dry-run"

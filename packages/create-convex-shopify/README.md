@@ -12,8 +12,9 @@ The package remains `private: true` while the repository has no selected
 license and no npm release. After those release decisions, it is structured to
 support `npm create convex-shopify@latest` without changing the CLI.
 
-The initializer resolves its default public `main` branch (or any explicitly
-selected branch) to an immutable commit, extracts only the
+The launcher resolves its default public `main` branch (or any explicitly
+selected ref) once, downloads the CLI and its SHA-256 checksum from that same
+immutable commit, and forces template extraction from that commit. The CLI extracts only the
 `template/` workspace, rewrites its monorepo-local component dependency to the
 same public Git revision, initializes Git, installs dependencies, and launches
 the resumable Shopify/Convex setup wizard.

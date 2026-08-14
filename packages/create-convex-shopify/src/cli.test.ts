@@ -1,5 +1,33 @@
-import { describe, expect, test } from 'vitest'
-import { parseArgs, rewriteTemplatePackage, slugify } from './cli.js'
+import { spawnSync } from 'node:child_process'
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, test } from 'vitest'
+import { main, parseArgs, rewriteTemplatePackage, slugify } from './cli.js'
+
+const temporaryDirectories: Array<string> = []
+
+afterEach(() => {
+  delete process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE
+  delete process.env.CREATE_CONVEX_SHOPIFY_TEST_REF
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
+})
+
+function fixtureArchive(kind: 'valid' | 'missing-dependency' = 'valid') {
+  const temporary = mkdtempSync(join(tmpdir(), 'create-convex-shopify-test-'))
+  temporaryDirectories.push(temporary)
+  const template = join(temporary, 'fixture-repository', 'template')
+  mkdirSync(template, { recursive: true })
+  writeFileSync(join(template, 'package.json'), JSON.stringify({
+    name: 'template',
+    dependencies: kind === 'valid' ? { '@convex-dev/shopify': 'file:..' } : {},
+  }))
+  writeFileSync(join(template, 'marker.txt'), 'copied')
+  const archive = join(temporary, 'fixture.tar.gz')
+  const result = spawnSync('tar', ['-czf', archive, '-C', temporary, 'fixture-repository'])
+  if (result.status !== 0) throw new Error('Could not create initializer fixture')
+  return { temporary, archive }
+}
 
 describe('initializer inputs', () => {
   test('normalizes app names without allowing an empty result', () => {
@@ -24,5 +52,28 @@ describe('initializer inputs', () => {
         convex: '^1.43.0',
       },
     })
+  })
+
+  test('extracts a monorepo template, pins its dependency, and initializes Git', async () => {
+    const { temporary, archive } = fixtureArchive()
+    const target = join(temporary, 'generated-app')
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE = archive
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_REF = 'a'.repeat(40)
+    await main(['--name', 'Generated App', '--directory', target, '--yes', '--no-install', '--no-setup'])
+
+    const packageJson = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8'))
+    expect(packageJson.name).toBe('generated-app')
+    expect(packageJson.dependencies['@convex-dev/shopify']).toBe(`git+https://github.com/tomslutsky/convex-shopify.git#${'a'.repeat(40)}`)
+    expect(readFileSync(join(target, 'marker.txt'), 'utf8')).toBe('copied')
+    expect(existsSync(join(target, '.git'))).toBe(true)
+  })
+
+  test('removes a partially created target when the archive is invalid', async () => {
+    const { temporary, archive } = fixtureArchive('missing-dependency')
+    const target = join(temporary, 'failed-app')
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE = archive
+    process.env.CREATE_CONVEX_SHOPIFY_TEST_REF = 'b'.repeat(40)
+    await expect(main(['--name', 'Failed App', '--directory', target, '--yes', '--no-install', '--no-setup'])).rejects.toThrow('missing @convex-dev/shopify')
+    expect(existsSync(target)).toBe(false)
   })
 })

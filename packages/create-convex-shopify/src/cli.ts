@@ -117,7 +117,13 @@ export async function main(argv = process.argv.slice(2)) {
   const appName = slugify(options.name ?? (options.yes ? 'my-shopify-app' : await promptForName('my-shopify-app')))
   const target = resolve(options.directory ?? appName)
   if (existsSync(target)) throw new Error(`Refusing to overwrite existing path: ${target}`)
-  const resolvedRef = options.dryRun ? options.templateRef : resolveRef(options.templateRef)
+  const archiveOverride = process.env.CREATE_CONVEX_SHOPIFY_TEST_ARCHIVE
+  const resolvedRef = options.dryRun
+    ? options.templateRef
+    : archiveOverride
+      ? process.env.CREATE_CONVEX_SHOPIFY_TEST_REF ?? '0000000000000000000000000000000000000000'
+      : resolveRef(options.templateRef)
+  if (!options.dryRun && !/^[0-9a-f]{40}$/.test(resolvedRef)) throw new Error('Resolved template ref must be a full commit SHA')
 
   process.stdout.write(`\nCreate Convex Shopify\n\n  App:      ${appName}\n  Target:   ${target}\n  Template: ${REPOSITORY}@${resolvedRef}\n\n`)
   if (options.dryRun) {
@@ -131,7 +137,8 @@ export async function main(argv = process.argv.slice(2)) {
     const archive = join(temporary, 'repository.tar.gz')
     const extracted = join(temporary, 'repository')
     mkdirSync(extracted)
-    await download(`https://github.com/${REPOSITORY}/archive/${resolvedRef}.tar.gz`, archive)
+    if (archiveOverride) cpSync(archiveOverride, archive)
+    else await download(`https://github.com/${REPOSITORY}/archive/${resolvedRef}.tar.gz`, archive)
     run('tar', ['-xzf', archive, '-C', extracted])
     const archiveRoot = readdirSync(extracted, { withFileTypes: true }).find((entry) => entry.isDirectory())
     if (!archiveRoot) throw new Error('Downloaded archive is empty')

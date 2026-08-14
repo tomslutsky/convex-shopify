@@ -122,4 +122,15 @@ describe('verified webhook ingress', () => {
       shopDomain: 'alpha.myshopify.com', scopes: ['read_orders', 'write_products'],
     })).resolves.toEqual({ installed: true, changed: false, scopes: ['read_orders', 'write_products'] })
   })
+
+  test('scope updates before token exchange are an observable no-op', async () => {
+    vi.useFakeTimers()
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+    const t = backend()
+    expect((await webhook(t, 'scopes-before-install', 'app/scopes_update', true, { current: ['read_products'] })).status).toBe(200)
+    await drain(t)
+    await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({ installed: false, scopes: [] })
+    expect(info).toHaveBeenCalledWith('Ignoring scope update before component installation exists', { shopDomain: 'alpha.myshopify.com' })
+    info.mockRestore()
+  })
 })

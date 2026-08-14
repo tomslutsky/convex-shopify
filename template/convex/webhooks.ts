@@ -18,7 +18,10 @@ const reconcileScopes: WebhookHandler = async (ctx, { shopDomain, payload }) => 
   if (!scopes.every((scope): scope is string => typeof scope === 'string')) {
     throw new Error('app/scopes_update current scopes must be strings')
   }
-  await shopify.installations.reconcileScopes(ctx, { shopDomain, scopes })
+  const reconciliation = await shopify.installations.reconcileScopes(ctx, { shopDomain, scopes })
+  if (!reconciliation.installed) {
+    console.info('Ignoring scope update before component installation exists', { shopDomain })
+  }
   return { status: 'processed' }
 }
 
