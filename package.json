@@ -62,7 +62,7 @@
     "verify": "npm run verify:component && npm run verify:initializer && npm run build --workspace shopify-convex-template && npm run test --workspace shopify-convex-template",
     "test": "vitest run --config ./vitest.config.ts",
     "test:all": "npm test && npm run test --workspace shopify-convex-template",
-    "verify:initializer": "npm run typecheck --workspace create-convex-shopify && npm run test --workspace create-convex-shopify && npm run build --workspace create-convex-shopify && npm run pack:check --workspace create-convex-shopify",
+    "verify:initializer": "npm run typecheck --workspace create-convex-shopify && npm run build --workspace create-convex-shopify && npm run test --workspace create-convex-shopify && npm run pack:check --workspace create-convex-shopify",
     "pack:check": "node ./scripts/check-packed-package.mjs"
   },
   "peerDependencies": {

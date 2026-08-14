@@ -42,6 +42,12 @@ describe('initializer inputs', () => {
     expect(() => parseArgs(['--wat'])).toThrow('Unknown option')
   })
 
+  test('compiled CLI executes when invoked through a symlinked temporary path', () => {
+    const result = spawnSync(process.execPath, [join(import.meta.dirname, '..', 'dist', 'cli.js'), '--name', 'Executable Check', '--directory', '/tmp/unused-executable-check', '--yes', '--no-install', '--no-setup', '--dry-run'], { encoding: 'utf8' })
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('App:      executable-check')
+  })
+
   test('rewrites only the standalone package identity and component dependency', () => {
     const input = JSON.stringify({ name: 'shopify-convex-template', dependencies: { '@convex-dev/shopify': 'file:..', convex: '^1.43.0' } })
     const result = JSON.parse(rewriteTemplatePackage(input, 'demo', 'abc123'))
