@@ -41,7 +41,14 @@ async function signature(body: string) {
 
 async function webhook(t: ReturnType<typeof backend>, id: string, topic: string, valid = true, payload: unknown = {}) {
   const body = JSON.stringify(payload)
-  return t.fetch('/webhooks/shopify', { method: 'POST', body, headers: {
+  const paths: Record<string, string> = {
+    'app/uninstalled': '/webhooks/app/uninstalled',
+    'app/scopes_update': '/webhooks/app/scopes-update',
+    'customers/data_request': '/webhooks/customers/data-request',
+    'customers/redact': '/webhooks/customers/redact',
+    'shop/redact': '/webhooks/shop/redact',
+  }
+  return t.fetch(paths[topic] ?? '/webhooks/app/uninstalled', { method: 'POST', body, headers: {
     'content-type': 'application/json', 'x-shopify-topic': topic,
     'x-shopify-shop-domain': 'alpha.myshopify.com', 'x-shopify-webhook-id': id,
     'x-shopify-hmac-sha256': valid ? await signature(body) : 'invalid',
@@ -58,6 +65,17 @@ describe('verified webhook ingress', () => {
   test('rejects invalid HMAC before persisting delivery state', async () => {
     const t = backend()
     expect((await webhook(t, 'forged', 'app/uninstalled', false)).status).toBe(401)
+  })
+
+  test('rejects a valid webhook delivered to the wrong topic endpoint', async () => {
+    const t = backend()
+    const body = '{}'
+    const response = await t.fetch('/webhooks/app/uninstalled', { method: 'POST', body, headers: {
+      'content-type': 'application/json', 'x-shopify-topic': 'app/scopes_update',
+      'x-shopify-shop-domain': 'alpha.myshopify.com', 'x-shopify-webhook-id': 'wrong-route',
+      'x-shopify-hmac-sha256': await signature(body),
+    } })
+    expect(response.status).toBe(400)
   })
 
   test('persists delivery deduplication across repeated requests', async () => {
@@ -118,19 +136,26 @@ describe('verified webhook ingress', () => {
       scopes: ['read_orders', 'write_products'],
       missingScopes: [],
     })
-    await expect(t.mutation(componentMutation('install/reconcileScopes'), {
-      shopDomain: 'alpha.myshopify.com', scopes: ['read_orders', 'write_products'],
-    })).resolves.toEqual({ installed: true, changed: false, scopes: ['read_orders', 'write_products'] })
   })
 
-  test('scope updates before token exchange are an observable no-op', async () => {
+  test('scope updates before token exchange are an idempotent no-op', async () => {
     vi.useFakeTimers()
-    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined)
     const t = backend()
     expect((await webhook(t, 'scopes-before-install', 'app/scopes_update', true, { current: ['read_products'] })).status).toBe(200)
     await drain(t)
     await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({ installed: false, scopes: [] })
-    expect(info).toHaveBeenCalledWith('Ignoring scope update before component installation exists', { shopDomain: 'alpha.myshopify.com' })
-    info.mockRestore()
+  })
+
+  test('rejects malformed scope lifecycle payloads without changing component state', async () => {
+    const t = backend()
+    await t.mutation(componentMutation('installations/upsert'), {
+      shopDomain: 'alpha.myshopify.com', scopes: 'read_products',
+      encryptedAccessToken: 'ciphertext', tokenIv: 'iv', tokenKeyVersion: 'v1',
+    })
+    expect((await webhook(t, 'bad-scopes', 'app/scopes_update', true, { current: ['read_orders', 42] })).status).toBe(400)
+    await expect(t.query(componentQuery('auth/snapshot'), { shopDomain: 'alpha.myshopify.com' })).resolves.toMatchObject({
+      installed: true,
+      scopes: ['read_products'],
+    })
   })
 })

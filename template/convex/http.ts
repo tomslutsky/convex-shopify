@@ -1,10 +1,9 @@
-import { ShopifyWebhookAuthenticationError } from '@convex-dev/shopify'
 import { registerStaticRoutes } from '@convex-dev/static-hosting'
 import { httpRouter } from 'convex/server'
 import { components, internal } from './_generated/api'
 import { httpAction } from './_generated/server'
 import { corsHeaders, jsonResponse, parseJwk, signAppToken } from './lib/appAuth'
-import { shouldDeduplicateWebhook, toWebhookTopic } from './lib/deliveries'
+import { receiveShopifyWebhook } from './lib/shopifyWebhookRoute'
 import { shopify } from './lib/shopifyApp'
 
 const http = httpRouter()
@@ -43,31 +42,21 @@ http.route({
   }),
 })
 
-http.route({
-  path: '/webhooks/shopify',
-  method: 'POST',
-  handler: httpAction(async (ctx, request) => {
-    let webhook
-    try {
-      webhook = await shopify.authenticate.webhook(ctx, request)
-    } catch (error) {
-      if (error instanceof ShopifyWebhookAuthenticationError) {
-        if (error.reason === 'invalid_hmac') return new Response('Invalid webhook signature', { status: 401 })
-        if (error.reason === 'invalid_json') return new Response('Invalid JSON', { status: 400 })
-        if (error.reason === 'invalid_shop_domain') return new Response('Invalid shop domain', { status: 400 })
-        return new Response('Missing webhook metadata', { status: 400 })
-      }
-      return new Response('Webhook authentication failed', { status: 500 })
-    }
-    const topic = toWebhookTopic(webhook.topic)
-    if (!topic) return new Response('Unsupported webhook topic', { status: 400 })
-    await shopify.webhooks.accept(ctx, { ...webhook, topic }, {
-      handler: internal.webhooks.process,
-      deduplicate: shouldDeduplicateWebhook(topic),
-    })
-    return new Response(null, { status: 200 })
-  }),
-})
+const webhookRoutes = [
+  ['/webhooks/app/uninstalled', 'app/uninstalled', internal.webhooks.appUninstalled],
+  ['/webhooks/app/scopes-update', 'app/scopes_update', internal.webhooks.appScopesUpdated],
+  ['/webhooks/customers/data-request', 'customers/data_request', internal.webhooks.customersDataRequest],
+  ['/webhooks/customers/redact', 'customers/redact', internal.webhooks.customersRedact],
+  ['/webhooks/shop/redact', 'shop/redact', internal.webhooks.shopRedact],
+] as const
+
+for (const [path, topic, handler] of webhookRoutes) {
+  http.route({
+    path,
+    method: 'POST',
+    handler: httpAction((ctx, request) => receiveShopifyWebhook(ctx, request, topic, handler)),
+  })
+}
 
 // Keep the stable Shopify auth/webhook routes above at the root. This final
 // catch-all serves static assets and falls back to index.html for SPA routes.

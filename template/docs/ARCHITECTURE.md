@@ -10,7 +10,9 @@
 
 ## Ownership contract
 
-The `convex-shopify` dependency owns Shopify token verification/exchange, encrypted credential lifecycle, Admin transport, HMAC verification, sanitized session metadata, and key rotation. This application owns membership, roles, tenant authorization, webhook delivery state, uninstall effects outside the component, and every domain/compliance decision.
+The `convex-shopify` dependency owns Shopify token verification/exchange, encrypted credential lifecycle, Admin transport, HMAC verification, durable webhook delivery state, sanitized session metadata, and key rotation. This application owns membership, roles, tenant authorization, uninstall effects outside the component, and every domain/compliance decision.
+
+Webhook URLs are explicit per topic. A shared app helper authenticates each request, enforces that the Shopify topic matches its endpoint, and hands the delivery to the component. The component deduplicates and retries deliveries and projects `app/scopes_update` and `app/uninstalled` into its own credential state before the app-owned callback runs. Application callbacks handle only app-owned effects.
 
 The starter contains no business-domain model. Add tables only when their ownership and deletion contract is understood. For every public function, derive identity via `ctx.auth`; verify the referenced row belongs to that identity's store; return not-found for cross-store identifiers.
 

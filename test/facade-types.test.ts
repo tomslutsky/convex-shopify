@@ -37,7 +37,7 @@ test('template facade preserves custom mount and TypedDocumentNode inference', a
       shop: 'example.myshopify.com', topic: 'PRODUCTS_UPDATE', payload: {},
       webhookId: 'delivery-1', rawBody: new ArrayBuffer(0), session: null,
     }, { handler })
-    expectTypeOf(accepted.status).toEqualTypeOf<'accepted' | 'duplicate'>()
+    expectTypeOf(accepted.status).toEqualTypeOf<'accepted' | 'duplicate' | 'rejected'>()
     const failed = await shopify.webhooks.listFailed(ctx)
     expectTypeOf(failed[0]!.deliveryId).toEqualTypeOf<string>()
     await shopify.webhooks.replay(ctx, failed[0]!.deliveryId)

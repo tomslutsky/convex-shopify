@@ -155,14 +155,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         }, Name>;
     };
     install: {
-        reconcileScopes: FunctionReference<"mutation", "internal", {
-            scopes: Array<string>;
-            shopDomain: string;
-        }, {
-            changed: boolean;
-            installed: boolean;
-            scopes: Array<string>;
-        }, Name>;
         reencrypt: FunctionReference<"action", "internal", {
             batchSize?: number;
             cursor?: string | null;

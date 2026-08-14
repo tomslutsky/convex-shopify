@@ -37,19 +37,6 @@ export const upsert = internalMutation({
   },
 })
 
-export const reconcileScopes = internalMutation({
-  args: { shopDomain: v.string(), scopes: v.array(v.string()) },
-  returns: v.object({ installed: v.boolean(), changed: v.boolean(), scopes: v.array(v.string()) }),
-  handler: async (ctx, args) => {
-    const session = await ctx.db.query('offlineSessions').withIndex('by_shopDomain', (q) => q.eq('shopDomain', args.shopDomain)).unique()
-    const scopes = normalizeScopes(args.scopes.join(','))
-    if (!session) return { installed: false, changed: false, scopes: [] }
-    if (session.scopes === scopes.join(',')) return { installed: true, changed: false, scopes }
-    await ctx.db.patch('offlineSessions', session._id, { scopes: scopes.join(','), updatedAt: Date.now() })
-    return { installed: true, changed: true, scopes }
-  },
-})
-
 const installationValue = v.object({
   shopDomain: v.string(), encryptedAccessToken: v.string(), tokenIv: v.string(), tokenKeyVersion: v.string(), scopes: v.string(), credentialGeneration: v.number(),
   accessTokenExpiresAt: v.optional(v.number()), encryptedRefreshToken: v.optional(v.string()), refreshTokenIv: v.optional(v.string()), refreshTokenExpiresAt: v.optional(v.number()),

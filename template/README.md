@@ -58,7 +58,7 @@ TanStack Start is deliberately configured as an SPA. The default template has no
 
 After reviewing the target deployment, deploy the backend with `npm run deploy:convex`, then build and atomically upload the SPA with `npm run publish:static`. The latter runs the production Vite build with `VITE_CONVEX_URL` set for the selected production deployment and uploads the static `dist/client/` output with SPA fallback enabled. It does not upload TanStack's build-only server output or change Shopify configuration.
 
-The resulting app URL is `https://<production-deployment-name>.convex.site`. Copy the production example to the ignored `shopify.app.production.toml`, replace `application_url` with that hosted URL, and keep the webhook URI `/webhooks/shopify`; Shopify resolves it against the application URL. Link and deploy the named Shopify production configuration only during an approved release. See [operations](docs/OPERATIONS.md).
+The resulting app URL is `https://<production-deployment-name>.convex.site`. Copy the production example to the ignored `shopify.app.production.toml`, replace `application_url` with that hosted URL, and keep the committed topic-specific webhook paths; Shopify resolves them against the application URL. Link and deploy the named Shopify production configuration only during an approved release. See [operations](docs/OPERATIONS.md).
 
 Run `npm run auth:keys` once per environment. It creates an untracked, mode-`0600` file and never prints private material. Delete the local file after setting the Convex environment values. See [environment reference](docs/ENVIRONMENT.md).
 

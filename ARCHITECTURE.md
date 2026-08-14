@@ -16,6 +16,8 @@ application integration. It is a Convex component, not a complete Shopify app.
 - Verify webhook HMACs over the exact request bytes before any JSON parsing.
 - Persist verified webhook deliveries, deduplicate them, retry app callbacks,
   and retain terminal state for inspection and replay.
+- Project verified scope-update and uninstall events into component-owned
+  credential state before invoking application callbacks.
 - Return sanitized session metadata without exposing credentials.
 - Rotate encryption keys in bounded, resumable batches.
 - Optionally call the Shopify Partner GraphQL API using organization-owned

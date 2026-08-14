@@ -4,6 +4,7 @@ import { v } from 'convex/values';
 import { components, internal } from './_generated/api.js';
 import { action, mutation, query } from './_generated/server.js';
 import { validShopifyWebhook } from './lib/shopifyAuth.js';
+import { normalizeScopes } from './installations.js';
 const webhookPool = new Workpool(components
     .webhookWorkpool, {
     maxParallelism: 10,
@@ -25,6 +26,39 @@ async function enqueue(ctx, deliveryId) {
     });
     await ctx.db.patch('webhookDeliveries', deliveryId, { workId });
 }
+async function applyShopifyLifecycle(ctx, args) {
+    if (args.topic === 'app/scopes_update' || args.topic === 'APP_SCOPES_UPDATE') {
+        if (!args.payload || typeof args.payload !== 'object')
+            return false;
+        const current = args.payload.current;
+        if (!Array.isArray(current) || !current.every((scope) => typeof scope === 'string')) {
+            return false;
+        }
+        const session = await ctx.db
+            .query('offlineSessions')
+            .withIndex('by_shopDomain', (q) => q.eq('shopDomain', args.shopDomain))
+            .unique();
+        if (!session)
+            return true;
+        const scopes = normalizeScopes(current.join(',')).join(',');
+        if (session.scopes !== scopes) {
+            await ctx.db.patch('offlineSessions', session._id, {
+                scopes,
+                updatedAt: Date.now(),
+            });
+        }
+        return true;
+    }
+    if (args.topic === 'app/uninstalled' || args.topic === 'APP_UNINSTALLED') {
+        const session = await ctx.db
+            .query('offlineSessions')
+            .withIndex('by_shopDomain', (q) => q.eq('shopDomain', args.shopDomain))
+            .unique();
+        if (session)
+            await ctx.db.delete('offlineSessions', session._id);
+    }
+    return true;
+}
 export const verifyRequestHmac = action({
     args: { body: v.bytes(), signature: v.string() },
     returns: v.boolean(),
@@ -38,7 +72,7 @@ export const verify = action({
 });
 export const accept = mutation({
     args: { ...deliveryArgs, deduplicate: v.boolean() },
-    returns: v.union(v.object({ status: v.literal('accepted'), deliveryId: v.id('webhookDeliveries') }), v.object({ status: v.literal('duplicate'), deliveryId: v.id('webhookDeliveries') })),
+    returns: v.union(v.object({ status: v.literal('accepted'), deliveryId: v.id('webhookDeliveries') }), v.object({ status: v.literal('duplicate'), deliveryId: v.id('webhookDeliveries') }), v.object({ status: v.literal('rejected'), reason: v.literal('invalid_lifecycle_payload') })),
     handler: async (ctx, args) => {
         if (args.deduplicate) {
             const existing = await ctx.db
@@ -47,6 +81,9 @@ export const accept = mutation({
                 .unique();
             if (existing)
                 return { status: 'duplicate', deliveryId: existing._id };
+        }
+        if (!await applyShopifyLifecycle(ctx, args)) {
+            return { status: 'rejected', reason: 'invalid_lifecycle_payload' };
         }
         const deliveryId = await ctx.db.insert('webhookDeliveries', {
             webhookId: args.webhookId,

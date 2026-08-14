@@ -240,15 +240,8 @@ export type ShopifyWebhookRequest = {
  * Credentials remain component-private; all returned sessions are sanitized.
  */
 export declare function shopifyApp<TName extends string | undefined>(options: ShopifyAppOptions<TName>): {
-    installations: {
-        reconcileScopes: (ctx: MutationCtx, args: {
-            shopDomain: string;
-            scopes: Array<string>;
-        }) => Promise<{
-            installed: boolean;
-            changed: boolean;
-            scopes: Array<string>;
-        }>;
+    installation: {
+        snapshot: (ctx: QueryCtx, shop: string) => Promise<ShopifyInstallationSnapshot>;
     };
     authenticate: {
         admin: (ctx: ActionCtx, args: {
@@ -273,6 +266,9 @@ export declare function shopifyApp<TName extends string | undefined>(options: Sh
         }) => Promise<{
             status: "accepted" | "duplicate";
             deliveryId: string;
+        } | {
+            status: "rejected";
+            reason: "invalid_lifecycle_payload";
         }>;
         listFailed: (ctx: QueryCtx, options?: {
             limit?: number;

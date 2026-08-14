@@ -16,9 +16,15 @@ export declare const accept: import("convex/server").RegisteredMutation<"public"
 }, Promise<{
     status: "duplicate";
     deliveryId: import("convex/values").GenericId<"webhookDeliveries">;
+    reason?: undefined;
+} | {
+    status: "rejected";
+    reason: "invalid_lifecycle_payload";
+    deliveryId?: undefined;
 } | {
     status: "accepted";
     deliveryId: import("convex/values").GenericId<"webhookDeliveries">;
+    reason?: undefined;
 }>>;
 export declare const runDelivery: import("convex/server").RegisteredAction<"public", {
     deliveryId: import("convex/values").GenericId<"webhookDeliveries">;

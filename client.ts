@@ -384,7 +384,10 @@ export function shopifyApp<TName extends string | undefined>(
       payload: unknown
       handler: string
       deduplicate: boolean
-    }, { status: 'accepted' | 'duplicate'; deliveryId: string }>
+    },
+      | { status: 'accepted' | 'duplicate'; deliveryId: string }
+      | { status: 'rejected'; reason: 'invalid_lifecycle_payload' }
+    >
     listFailed: FunctionReference<'query', 'internal', { limit?: number }, Array<ShopifyFailedWebhookDelivery>>
     replay: FunctionReference<'mutation', 'internal', { deliveryId: string }, null>
   } }
@@ -454,15 +457,16 @@ export function shopifyApp<TName extends string | undefined>(
   }
 
   return {
-    installations: {
-      reconcileScopes: async (
-        ctx: MutationCtx,
-        args: { shopDomain: string; scopes: Array<string> },
-      ): Promise<{ installed: boolean; changed: boolean; scopes: Array<string> }> =>
-        await ctx.runMutation(component.install.reconcileScopes, {
-          shopDomain: normalizeShopDomain(args.shopDomain),
-          scopes: args.scopes,
-        }),
+    installation: {
+      snapshot: async (
+        ctx: QueryCtx,
+        shop: string,
+      ): Promise<ShopifyInstallationSnapshot> =>
+        normalizeInstallationSnapshot(
+          await ctx.runQuery(component.auth.snapshot, {
+            shopDomain: normalizeShopDomain(shop),
+          }),
+        ),
     },
     authenticate: {
       admin: async (

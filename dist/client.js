@@ -79,11 +79,10 @@ export function shopifyApp(options) {
         },
     };
     return {
-        installations: {
-            reconcileScopes: async (ctx, args) => await ctx.runMutation(component.install.reconcileScopes, {
-                shopDomain: normalizeShopDomain(args.shopDomain),
-                scopes: args.scopes,
-            }),
+        installation: {
+            snapshot: async (ctx, shop) => normalizeInstallationSnapshot(await ctx.runQuery(component.auth.snapshot, {
+                shopDomain: normalizeShopDomain(shop),
+            })),
         },
         authenticate: {
             admin: async (ctx, args) => {

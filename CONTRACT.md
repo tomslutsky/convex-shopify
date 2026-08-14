@@ -31,6 +31,7 @@ It exposes:
 - `sessionStorage.findSessionByShop(ctx, shop)`
 - `sessionStorage.deleteSession(ctx, id)`
 - `sessionStorage.deleteSessionsForShop(ctx, shop)`
+- `installation.snapshot(ctx, shop)`
 - `operations.credentials.rotate(ctx, options)`
 
 Both Admin entry points return `{ admin, session }`. The embedded entry point
@@ -56,9 +57,15 @@ must come from an app-owned, authenticated and authorized server workflow.
 parsing JSON or trusting metadata, and returns `shop`, a Shopify-normalized
 topic such as `APP_UNINSTALLED`, `webhookId`,
 `payload`, `rawBody`, and a nullable stored session. `webhooks.accept` persists
-the verified delivery, deduplicates it when requested, and invokes an app-owned
+the verified delivery, deduplicates it when requested, applies Shopify lifecycle
+events to component-owned state, and invokes an app-owned
 internal mutation through a durable retrying workpool. The component records
 terminal failures and exposes bounded inspection and replay operations.
+
+Lifecycle projection is automatic and idempotent: `APP_SCOPES_UPDATE` replaces
+the stored granted-scope set, while `APP_UNINSTALLED` removes component-owned
+credentials. Application callbacks remain responsible for app-owned domain
+effects such as memberships, retention, and privacy workflows.
 
 `shopifyApp` is the supported application facade. Lower-level exports exist for
 advanced integration and testing, but are not a second authorization layer.

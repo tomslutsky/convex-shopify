@@ -1,7 +1,6 @@
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
 import { internalMutation } from './_generated/server'
-import { shopify } from './lib/shopifyApp'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { WebhookHandler } from './lib/deliveries'
@@ -18,7 +17,6 @@ async function deleteMemberPage(ctx: MutationCtx, storeId: Id<'stores'>): Promis
 }
 
 export const uninstallStore: WebhookHandler = async (ctx, { shopDomain }) => {
-  await shopify.sessionStorage.deleteSessionsForShop(ctx, shopDomain)
   const store = await ctx.db
     .query('stores')
     .withIndex('by_shopDomain', (q) => q.eq('shopDomain', shopDomain))

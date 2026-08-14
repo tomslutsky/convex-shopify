@@ -6,19 +6,11 @@ export declare const upsert: import("convex/server").RegisteredMutation<"interna
     refreshTokenIv?: string | undefined;
     refreshTokenExpiresAt?: number | undefined;
     shopDomain: string;
-    scopes: string;
     encryptedAccessToken: string;
     tokenIv: string;
     tokenKeyVersion: string;
+    scopes: string;
 }, Promise<null>>;
-export declare const reconcileScopes: import("convex/server").RegisteredMutation<"internal", {
-    shopDomain: string;
-    scopes: string[];
-}, Promise<{
-    installed: boolean;
-    changed: boolean;
-    scopes: string[];
-}>>;
 export declare const forStore: import("convex/server").RegisteredQuery<"internal", {
     shopDomain: string;
 }, Promise<{
@@ -90,10 +82,10 @@ export declare const persistReencrypted: import("convex/server").RegisteredMutat
 }, Promise<boolean>>;
 export declare const persistRefreshed: import("convex/server").RegisteredMutation<"internal", {
     shopDomain: string;
-    scopes: string;
     encryptedAccessToken: string;
     tokenIv: string;
     tokenKeyVersion: string;
+    scopes: string;
     accessTokenExpiresAt: number;
     encryptedRefreshToken: string;
     refreshTokenIv: string;

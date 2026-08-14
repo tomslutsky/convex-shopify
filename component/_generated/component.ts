@@ -184,13 +184,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     install: {
-      reconcileScopes: FunctionReference<
-        "mutation",
-        "internal",
-        { scopes: Array<string>; shopDomain: string },
-        { changed: boolean; installed: boolean; scopes: Array<string> },
-        Name
-      >;
       reencrypt: FunctionReference<
         "action",
         "internal",
