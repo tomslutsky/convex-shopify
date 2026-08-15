@@ -1,72 +1,59 @@
-# Shopify + Convex app starter
+# Convex Shopify app starter
 
-A deliberately small foundation for an embedded Shopify app using TanStack Start, React, Vite, Convex, App Bridge, and the `@convex-dev/shopify` component.
+An embedded Shopify App Home using React, TanStack Start, Vite, App Bridge,
+Polaris web components, and Convex.
 
-Requires Node.js 22.18 or newer. The App Home UI uses Shopify's CDN-hosted App Bridge and Polaris web components with their official companion TypeScript packages.
+Requires Node.js 22.18 or newer.
 
-## Create your first app
+## Quickstart
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/tomslutsky/convex-shopify/main/template/create.sh | bash
 ```
 
-The public repository is a monorepo. The TypeScript initializer lives in the
-`create-convex-shopify` workspace; the curl command is only a compatibility
-launcher for its committed build. The initializer downloads only `template/`,
-resolves branches to immutable commits, and rewrites the monorepo-only `file:..`
-component dependency to that same public Git revision. No GitHub credentials
-are required. The initializer workspace is not yet published to npm; after the
-repository's licensing and npm-release decisions, it can also provide
-`npm create convex-shopify@latest`.
-The no-argument path is an interactive wizard: choose the app name, then let it
-download this template, install dependencies, link Shopify, select a fresh
-Convex project, generate protected keys, configure secrets, and run codegen.
-After cloning manually, the same resumable wizard is available as
-`npm run setup`. Use `npm run setup -- --help` to see automation flags.
+Choose an app name when prompted. The setup wizard will:
 
-Open the generated preview URL through **Shopify Admin → Apps** in your development store. Convex's built-in `CONVEX_SITE_URL` is the app-token issuer and JWKS origin, so initial project creation has no auth-environment-variable chicken-and-egg. The wizard copies the linked app's public client ID and securely transfers its API secret from Shopify CLI to Convex without displaying or retaining the secret.
+1. create the app directory;
+2. install dependencies;
+3. link or create the Shopify app configuration;
+4. create or select a Convex project;
+5. generate and configure protected keys;
+6. run Shopify GraphQL codegen.
 
-The component is consumed directly from a public GitHub commit behind verified
-tag `v0.2.0`; nothing is published to an npm registry. See
-[GitHub dependency](docs/GITHUB_DEPENDENCY.md).
-
-## What is included
-
-- Shopify App Bridge bootstrap and session-token exchange.
-- Shopify-native App Home layout and status UI using Polaris web components.
-- Five-minute ES256 Convex JWTs and a public-only JWKS endpoint.
-- Component-owned encrypted offline Shopify credentials and Admin GraphQL transport.
-- App-owned `stores` and `storeMembers` tables with server-derived authorization.
-- A typed inline `#graphql` shop identity example.
-- HMAC-verified webhooks, durable webhook-ID deduplication, uninstall cleanup, and explicit compliance contracts.
-- Deterministic negative security tests and configuration consistency checks.
-- Convex static hosting with SPA deep-link fallback and stable root-level Shopify endpoints.
-
-## Configuration
-
-The Shopify Admin API version and runtime scopes live in `convex/lib/shopifyConfig.ts`. `npm run config:check` proves that `shopify.app.toml` agrees. The committed TOML is intentionally a placeholder. Use named CLI configurations (`development` and `production`) and never commit a real client ID or generated local Shopify state.
-
-After Shopify CLI links the development app, the setup wizard synchronizes the template's scopes and webhook subscriptions into the generated named configuration. Run `npm run config:sync` if you relink outside the wizard.
-
-The committed `.vscode/mcp.json` starts Shopify's Dev MCP server for this workspace. Agent instructions in `AGENTS.md` scope it to Shopify APIs, configuration, webhooks, App Bridge, and Polaris work; it is not a general-purpose project tool. Other MCP-capable clients can use the same `npx -y @shopify/dev-mcp@latest` command in their project-level configuration.
-
-The frontend follows Shopify's current React model: React and TanStack own application state and routing, Polaris Web Components provide the App Home UI, and `@shopify/app-bridge-react` provides React access to App Bridge APIs such as toasts, modals, and resource pickers. No legacy App Bridge provider or deprecated Polaris React package is needed.
-
-TanStack Start is deliberately configured as an SPA. The default template has no SSR or TanStack server functions: put HTTP endpoints in `convex/http.ts` and all queries, mutations, actions, storage, and scheduled work in Convex.
-
-## Production hosting
-
-After reviewing the target deployment, deploy the backend with `npm run deploy:convex`, then build and atomically upload the SPA with `npm run publish:static`. The latter runs the production Vite build with `VITE_CONVEX_URL` set for the selected production deployment and uploads the static `dist/client/` output with SPA fallback enabled. It does not upload TanStack's build-only server output or change Shopify configuration.
-
-The resulting app URL is `https://<production-deployment-name>.convex.site`. Copy the production example to the ignored `shopify.app.production.toml`, replace `application_url` with that hosted URL, and keep the committed topic-specific webhook paths; Shopify resolves them against the application URL. Link and deploy the named Shopify production configuration only during an approved release. See [operations](docs/OPERATIONS.md).
-
-Run `npm run auth:keys` once per environment. It creates an untracked, mode-`0600` file and never prints private material. Delete the local file after setting the Convex environment values. See [environment reference](docs/ENVIRONMENT.md).
-
-## Verification
+Then run:
 
 ```sh
-npm ci
+cd my-shopify-app
+npm run dev
+```
+
+Open the development app from Shopify Admin. For automation, inspect:
+
+```sh
+npm run setup -- --help
+```
+
+The wizard is resumable. If setup stops while waiting for an interactive
+Shopify or Convex CLI prompt, run `npm run setup` again in the generated app.
+
+## What you get
+
+- Embedded App Bridge session-token authentication.
+- Convex JWT issuance and a public JWKS endpoint for the browser app.
+- Encrypted Shopify offline credentials managed by the component.
+- Typed Shopify Admin GraphQL operations.
+- Explicit topic-specific webhook routes with durable delivery and retries.
+- SPA deep-link fallback through Convex static hosting.
+- App-owned store membership and authorization examples.
+- Tests, config checks, codegen, lint, typecheck, and production build scripts.
+
+## Development commands
+
+```sh
+npm run dev
+npm run setup
 npm run config:check
+npm run config:sync
 npm run shopify:codegen
 npm test
 npm run typecheck
@@ -74,16 +61,63 @@ npm run lint
 npm run build
 ```
 
-These checks do not deploy. A real Shopify/Convex handshake remains a manual smoke test; see [operations](docs/OPERATIONS.md).
+These commands do not deploy. `npm run setup:check` checks local wiring without
+contacting a live deployment.
 
-## Security boundary
+## Main application flow
 
-The Shopify component owns credentials and protocol verification. This parent app owns identity-to-store membership and all domain authorization. Browser-supplied shop/user identifiers are never trusted for access decisions. Public Convex functions exist only for the authenticated browser flow; webhook persistence functions are internal.
+The browser sends its Shopify session token to `POST /auth/shopify`. Convex
+verifies the token, exchanges the offline credential, and returns a short-lived
+app JWT. The browser uses that JWT for the app's Convex functions.
 
-New apps must define an explicit role policy. This template never treats the first visitor as an owner. All established memberships begin with the neutral `member` role.
+The app exposes these Shopify webhook paths:
 
-## Compliance warning
+```text
+/webhooks/app/uninstalled
+/webhooks/app/scopes-update
+/webhooks/customers/data-request
+/webhooks/customers/redact
+/webhooks/shop/redact
+```
 
-The compliance endpoints authenticate and durably record Shopify deliveries, but customer export/redaction and shop-domain data deletion are intentionally app-owned stubs. **You must implement them for every domain table before using this starter with real merchant or customer data.** See [architecture and ownership](docs/ARCHITECTURE.md).
+The component verifies HMACs, deduplicates webhook IDs, updates its own scope or
+credential state, and retries the app-owned handler. Implement the compliance
+handlers in `convex/lib/compliance.ts` before storing real customer or merchant
+data.
 
-No license has been selected. All rights are reserved unless the repository owner adds a license.
+## Architecture rule
+
+TanStack Start is intentionally SPA-only. Do not add TanStack server functions,
+SSR loaders, or another application server to this template.
+
+- Put public HTTP callbacks in `convex/http.ts`.
+- Put reads and writes in Convex queries and mutations.
+- Put Shopify calls and other external I/O in Convex actions.
+- Put scheduled or retryable work in Convex functions.
+
+The Shopify component owns credentials and Shopify protocol. This app owns
+users, memberships, authorization, domain data, webhook URLs, and business
+behavior.
+
+## Production
+
+For a reviewed release:
+
+```sh
+npm run deploy:convex
+npm run publish:static
+```
+
+Then set `application_url` in the ignored production Shopify configuration to
+the resulting `https://<deployment>.convex.site` URL, verify the topic-specific
+webhook paths, and deploy the named Shopify configuration. Follow the complete
+[release runbook](docs/OPERATIONS.md).
+
+## Configuration and safety
+
+Runtime scopes and the Admin API version are defined in
+`convex/lib/shopifyConfig.ts`. `npm run config:check` verifies that the Shopify
+TOML files agree.
+
+Backend secrets belong in Convex environment variables. Never use a `VITE_`
+prefix for secrets. See [environment variables](docs/ENVIRONMENT.md).

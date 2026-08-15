@@ -1,16 +1,21 @@
-# GitHub component dependency
+# Installing from GitHub
 
-Inside the public monorepo, the template links `@convex-dev/shopify` from the
-repository root. The creation script extracts only `template/`, resolves its
-default `main` branch to an immutable commit, and rewrites that workspace
-dependency to the same selected public tag or commit.
+The starter currently consumes `@convex-dev/shopify` from this public GitHub
+repository instead of npm.
 
-The initializer is maintained as the `create-convex-shopify` workspace package,
-not as logic embedded in `template/create.sh`. The small shell launcher only
-resolves one immutable commit, downloads the CLI and its SHA-256 checksum from
-that commit, verifies it, and executes the CLI against the same commit. This
-prevents a branch update from pairing an older initializer with a newer template.
+The generated app pins the dependency to the same immutable commit as the
+downloaded template. This keeps the template and component API in sync and
+does not require a sibling checkout or GitHub credentials.
 
-`npm ci` resolves that commit directly from public GitHub over HTTPS. No npm
-registry publication, sibling checkout, GitHub credential, deploy key, or
-repository secret is required.
+To update an existing app, change the dependency to a reviewed commit, then
+run:
+
+```sh
+npm install
+npm run config:check
+npm test
+npm run typecheck
+npm run build
+```
+
+Do not replace an immutable commit with a moving branch in production.

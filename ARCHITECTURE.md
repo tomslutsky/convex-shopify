@@ -1,47 +1,58 @@
-# Architecture and ownership
+# Architecture
 
-This repository is the reusable Shopify platform boundary extracted from an
-application integration. It is a Convex component, not a complete Shopify app.
+## One backend: Convex
 
-## Component-owned behavior
+The starter uses TanStack Start as a client-side SPA. Convex is the backend:
 
-- Verify Shopify Admin session tokens and exchange them for expiring offline
-  credentials.
-- Encrypt access and refresh tokens at rest in the isolated `offlineSessions`
-  component table.
-- Refresh expiring credentials, serialize refresh races with generation checks,
-  and retry an Admin request once after a credential rejection.
-- Send Shopify Admin GraphQL operations and return the response envelope plus
-  request, API-version, cost, and throttle metadata.
-- Verify webhook HMACs over the exact request bytes before any JSON parsing.
-- Persist verified webhook deliveries, deduplicate them, retry app callbacks,
-  and retain terminal state for inspection and replay.
-- Project verified scope-update and uninstall events into component-owned
-  credential state before invoking application callbacks.
-- Return sanitized session metadata without exposing credentials.
-- Rotate encryption keys in bounded, resumable batches.
-- Optionally call the Shopify Partner GraphQL API using organization-owned
-  credentials that are never persisted.
+- `convex/http.ts` contains public HTTP callbacks such as auth and webhooks.
+- Convex queries read application data.
+- Convex mutations write application data.
+- Convex actions perform external I/O such as Shopify Admin calls.
+- Convex scheduled functions handle background work.
 
-## Parent-application behavior
+Do not add TanStack server functions, SSR loaders, or a second server to the
+default template.
 
-The consuming app authenticates its own users, derives their authorized store
-server-side, mounts HTTP routes, selects webhook deduplication policy,
-implements topic handlers, and owns every domain table and business invariant.
-Component functions cannot access parent `ctx.auth`; app wrappers must perform
-authorization before passing a shop domain across the boundary.
+## Component boundary
 
-The component intentionally contains no merchant roles, billing plans,
-application workflows, document generation, catalog matching, notifications,
-retention policy, or application-data migration logic.
+The Shopify component owns protocol and credential state:
 
-## Request flow
+- session-token verification and offline-token exchange;
+- encrypted access and refresh tokens;
+- token refresh and Admin GraphQL transport;
+- webhook HMAC verification and durable delivery;
+- automatic scope-update and uninstall projections;
+- encryption-key rotation.
 
-An embedded request obtains an App Bridge session token. An app action calls
-`authenticate.admin`, which verifies the token, exchanges or refreshes the
-offline credentials, and returns a sanitized session and Admin client. For a
-background job, app code first authorizes a store record and then calls
-`unauthenticated.admin`. A webhook reaches an app-owned HTTP route, which calls
-`authenticate.webhook`, then submits the verified delivery and an app-owned
-handler to `webhooks.accept`. The component durably executes the callback and
-records terminal state; the callback handles the topic using app-owned data.
+The parent app owns everything specific to the product:
+
+- users, memberships, roles, and tenant authorization;
+- stores and domain tables;
+- HTTP URL registration;
+- webhook business handlers;
+- privacy export and deletion rules.
+
+Components cannot inspect the parent app's `ctx.auth`, so every background
+workflow must resolve and authorize its shop in the parent app first.
+
+## Request flows
+
+An embedded request sends its App Bridge session token to a Convex action. The
+component verifies it and returns a shop-scoped Admin client backed by an
+encrypted offline credential.
+
+A background job resolves an authorized shop from app-owned data and calls
+`unauthenticated.admin`.
+
+A webhook reaches an app-owned topic-specific Convex HTTP route. The route
+authenticates the exact raw request, submits it to `webhooks.accept`, and
+returns after durable acceptance. The component deduplicates, applies its own
+lifecycle state changes, retries the app callback, and records terminal
+failures.
+
+## Static hosting
+
+Convex HTTP routes are registered before the static-hosting catch-all. Static
+hosting serves built assets and falls back to `index.html` for client-side deep
+links. This keeps Shopify auth, JWKS, and webhook URLs stable while allowing
+normal SPA navigation.

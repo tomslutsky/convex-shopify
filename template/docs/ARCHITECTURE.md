@@ -1,29 +1,50 @@
-# Architecture and ownership
+# App architecture
 
-## Request flow
+## Runtime
 
-1. App Bridge obtains a Shopify session token inside Shopify Admin.
-2. `POST /auth/shopify` asks the component to verify it and exchange it for an encrypted offline credential.
-3. The app signs a five-minute ES256 JWT containing the verified shop domain and Shopify user subject.
-4. Convex verifies that JWT against `/auth/shopify/jwks`; `stores.ensure` derives identity and store scope from `ctx.auth`.
-5. App actions resolve the authorized shop server-side before calling the component's Admin GraphQL client.
+The frontend is a TanStack Start SPA. Convex is the only backend.
 
-## Ownership contract
+| Need | Put it in |
+| --- | --- |
+| Browser UI and client routing | `src/` |
+| Public HTTP callback | `convex/http.ts` |
+| Database read | Convex query |
+| Database write | Convex mutation |
+| Shopify or other external I/O | Convex action |
+| Retryable/background work | Convex function or scheduler |
 
-The `convex-shopify` dependency owns Shopify token verification/exchange, encrypted credential lifecycle, Admin transport, HMAC verification, durable webhook delivery state, sanitized session metadata, and key rotation. This application owns membership, roles, tenant authorization, uninstall effects outside the component, and every domain/compliance decision.
+Do not add TanStack server functions, SSR, or a second API server.
 
-Webhook URLs are explicit per topic. A shared app helper authenticates each request, enforces that the Shopify topic matches its endpoint, and hands the delivery to the component. The component deduplicates and retries deliveries and projects `app/scopes_update` and `app/uninstalled` into its own credential state before the app-owned callback runs. Application callbacks handle only app-owned effects.
+## Ownership
 
-The starter contains no business-domain model. Add tables only when their ownership and deletion contract is understood. For every public function, derive identity via `ctx.auth`; verify the referenced row belongs to that identity's store; return not-found for cross-store identifiers.
+`@convex-dev/shopify` owns Shopify authentication, encrypted offline
+credentials, token refresh, Admin GraphQL, webhook verification, durable webhook
+delivery, and component lifecycle state.
 
-`convex/lib/compliance.ts` exposes three deliberately unimplemented, app-owned handler contracts. Verified compliance payloads are not stored by the generic starter; replace each stub with bounded, retry-safe domain export/deletion before handling real data.
+This app owns users, stores, memberships, authorization, domain data, HTTP
+routes, webhook handlers, and privacy behavior. The component cannot see this
+app's `ctx.auth`.
 
-## Frontend boundary
+## Webhook flow
 
-TanStack Start stays in SPA mode and Convex owns the backend. Do not add TanStack server functions, server routes, SSR loaders, or another application server to the default template. Add public HTTP callbacks in `convex/http.ts`; add application reads, writes, external-I/O actions, file storage, and scheduled work as Convex functions.
+Each Shopify topic has its own public URL. The shared route helper authenticates
+the exact raw request and checks that the topic matches the URL. The component
+then:
 
-Static hosting uses app-owned root routing because Shopify auth, JWKS, and webhook URLs are stable root paths. Exact Convex HTTP routes are registered first, then the static-hosting catch-all serves assets and returns `index.html` for client-side deep links.
+1. deduplicates by Shopify webhook ID;
+2. applies `app/scopes_update` or `app/uninstalled` to component state;
+3. stores and queues the delivery;
+4. retries the app-owned internal handler.
 
-## Deliberately excluded
+Handlers must be idempotent. Uninstall cleanup for app-owned memberships and
+domain data remains the app's responsibility.
 
-There are no legacy credential migrations, commerce workflows, billing plans, background-workflow frameworks, rate limiters, AI providers, document processing, or domain-specific deletion policies. Optional migration work belongs in application-specific documentation, not this baseline.
+## Authorization
+
+Never trust a shop, user ID, or store ID from the browser. Resolve the store
+from the authenticated app identity and check membership server-side before
+calling Shopify or reading tenant data.
+
+The compliance handlers are intentionally placeholders. Implement bounded,
+retry-safe export and deletion for every app-owned table before using the app
+with real customer or merchant data.

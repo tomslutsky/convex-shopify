@@ -1,36 +1,47 @@
-# @convex-dev/shopify
+# Convex Shopify
 
-A packaged Convex component for Shopify apps, intentionally shaped like
-Shopify's official React Router server package. It provides Shopify request
-authentication, encrypted expiring offline sessions, Admin GraphQL, webhook
-authentication, and operational credential rotation.
+Shopify authentication, encrypted offline credentials, Admin GraphQL, and
+durable webhooks for Convex applications.
 
-This is a public monorepo. The component package is marked `private: true`, so
-it is not published to npm; it is consumed from this public Git repository.
+This public repository contains two things:
 
-The canonical application starter lives in the `template` npm workspace. A
-single root install links it to this component and `npm run verify` validates
-the component package, packed-consumer boundary, and template together.
+- `template/`: a complete embedded Shopify app starter.
+- the component package: the backend boundary used by that starter.
 
-The `create-convex-shopify` workspace contains the TypeScript-based
-initializer for extracting `template/` from this monorepo. It pins branch-based
-creation to an immutable commit and rewrites the template's local workspace
-dependency to that same public Git revision. Like the component, the initializer
-is not yet published to npm; `template/create.sh` is its thin public launcher.
+The package is currently consumed from GitHub rather than npm. Use an
+immutable commit or a release tag.
 
-## Install the component
-
-Until an intentional npm-publication review, install from the public GitHub
-repository using a verified tag or immutable commit:
+## Start a new app
 
 ```sh
-npm install 'git+https://github.com/tomslutsky/convex-shopify.git#v0.2.0'
+curl -fsSL https://raw.githubusercontent.com/tomslutsky/convex-shopify/main/template/create.sh | bash
 ```
 
-No GitHub credentials or deploy key are required. The repository commits
-verified `dist/` artifacts, so installation does not depend on a sibling
-checkout or a Convex deployment. See `VERSIONING.md` for the distribution
-contract.
+The wizard creates a directory, installs dependencies, links Shopify, creates
+or selects a Convex project, configures secrets, and runs GraphQL codegen.
+Then start development:
+
+```sh
+cd my-shopify-app
+npm run dev
+```
+
+Use `npm run setup -- --help` for non-interactive setup and CI options.
+
+The generated app is an embedded Shopify App Home built with React, TanStack
+Start, Vite, App Bridge, and Convex. TanStack Start runs in SPA mode. The
+backend is Convex: HTTP routes live in `convex/http.ts`, and queries, mutations,
+actions, storage, and scheduled work live in Convex functions.
+
+## Use the component in an existing Convex app
+
+Install the public Git dependency:
+
+```sh
+npm install 'git+https://github.com/tomslutsky/convex-shopify.git#ebb433f2a9661dcaedf6f0dc9b8dcce80fd25067'
+```
+
+Register the component:
 
 ```ts
 // convex/convex.config.ts
@@ -42,38 +53,29 @@ app.use(shopify, { name: 'shopify' })
 export default app
 ```
 
-The facade accepts the generated component reference, so custom mount names are
-fully typed:
+Create the application facade from the generated component reference:
 
 ```ts
-// convex/shopify.ts
+// convex/lib/shopifyApp.ts
 import { shopifyApp } from '@convex-dev/shopify'
-import { components } from './_generated/api'
+import { components } from '../_generated/api'
 
-const shopify = shopifyApp({ component: components.shopify })
-
-export default shopify
-export const authenticate = shopify.authenticate
-export const unauthenticated = shopify.unauthenticated
-export const sessionStorage = shopify.sessionStorage
+export const shopify = shopifyApp({ component: components.shopify })
 ```
 
-Configure `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`,
-`SHOPIFY_TOKEN_ENCRYPTION_KEY`, `SHOPIFY_TOKEN_ENCRYPTION_KEY_VERSION`,
-`SHOPIFY_TOKEN_ENCRYPTION_KEYS`, `SHOPIFY_API_VERSION`, and `SHOPIFY_SCOPES` on
-the Convex deployment. Never expose credentials through `VITE_` variables.
+Set the required Convex environment variables before using the facade. See
+[`ENVIRONMENT.md`](ENVIRONMENT.md) for the complete list and key rotation
+instructions.
 
-The active encryption key must be strict base64 encoding of exactly 32 bytes.
-`SHOPIFY_TOKEN_ENCRYPTION_KEYS` is a JSON map containing previous versions only;
-the active version must not also appear there.
+## Main API
 
-## Authenticate an embedded Admin request
+### Embedded Admin requests
 
-This mirrors Shopify's `authenticate.admin(request)` flow while adapting the
-incoming token to a Convex action:
+Pass the Shopify App Bridge session token to the Convex action that handles
+your authenticated request:
 
 ```ts
-const { admin, session, shopifyUserId } = await authenticate.admin(ctx, {
+const { admin, session, shopifyUserId } = await shopify.authenticate.admin(ctx, {
   sessionToken,
 })
 
@@ -87,218 +89,139 @@ const result = await admin.graphql(
 )
 ```
 
-`session.shop` is the authenticated `*.myshopify.com` domain. The session is an
-offline session and is sanitized; access and refresh tokens remain encrypted
-inside the component.
+The component verifies the token, exchanges it for an offline credential, and
+keeps access and refresh tokens encrypted. The returned session contains shop,
+scope, and expiry metadata only.
 
-The result preserves partial `data` plus GraphQL `errors`, along with request
-ID, actual API version, HTTP status, query cost, and throttle status. Mutation
-payload `userErrors` remain typed application data, not transport errors.
+`result` preserves GraphQL data, GraphQL errors, request metadata, API version,
+cost, and throttle information. Use Shopify's GraphQL codegen preset for typed
+operations; see the template's `.graphqlrc.ts` and `npm run shopify:codegen`.
 
-## Offline and background workflows
+### Background Admin work
 
-Shopify calls workflows without a current Shopify Admin request
-“unauthenticated.” The application must still authorize or otherwise trust the
-shop before passing it here:
-
-```ts
-const store = await ctx.runQuery(internal.stores.authorizedForJob, { storeId })
-
-const { admin, session } = await unauthenticated.admin(ctx, store.shopDomain)
-
-await admin.graphql(
-  `#graphql
-    query SyncProducts($first: Int!) {
-      products(first: $first) { nodes { id title } }
-    }
-  `,
-  { variables: { first: 100 } },
-)
-```
-
-Never pass a browser-provided shop domain directly to
-`unauthenticated.admin`. Convex components cannot access parent `ctx.auth`; the
-parent app must derive the shop from an authenticated membership, an app-owned
-store record, a scheduled job record, or a verified webhook.
-
-The component refreshes expiring credentials before the Admin request. A `401`
-forces one refresh and one retry with the new credential. It does not retry
-arbitrary GraphQL mutations after ambiguous network or server failures.
-
-## Session storage
-
-The facade uses Shopify's storage vocabulary:
+There is no incoming Shopify request for a scheduled job or server workflow.
+Authorize the shop in your own data model first, then use:
 
 ```ts
-const session = await sessionStorage.findSessionByShop(ctx, shop)
-const byId = await sessionStorage.loadSession(ctx, `offline_${shop}`)
-
-await sessionStorage.deleteSessionsForShop(ctx, shop)
+const { admin } = await shopify.unauthenticated.admin(ctx, store.shopDomain)
 ```
 
-Returned sessions expose `id`, `shop`, `isOnline: false`, normalized scopes,
-access/refresh expiries, and missing scopes. They never expose credentials. A
-query-loaded session intentionally has no time-dependent `ready` status; Admin
-actions perform authoritative refresh and expiry classification.
+Never pass a browser-supplied shop domain directly. The parent app owns users,
+memberships, and authorization; the component cannot inspect the parent app's
+`ctx.auth`.
 
-`deleteSessionsForShop` forgets component credentials. It does not remotely
-uninstall the Shopify app.
+### Installation and sessions
 
-## Webhooks
-
-Use the native `Request`, as in Shopify's template:
+Use the read-only installation snapshot for current granted and missing scopes:
 
 ```ts
-try {
-  const { shop, topic, payload, webhookId, rawBody, session } =
-    await shopify.authenticate.webhook(ctx, request)
-
-  await shopify.webhooks.accept(ctx, { shop, topic, payload, webhookId, rawBody, session }, {
-    handler: internal.webhooks.process,
-    deduplicate: true,
-  })
-  return new Response(null, { status: 200 })
-} catch (error) {
-  return new Response('Invalid Shopify webhook', { status: 401 })
-}
+const installation = await shopify.installation.snapshot(ctx, shopDomain)
+// { installed, scopes, missingScopes, accessTokenExpiresAt, refreshTokenExpiresAt }
 ```
 
-HMAC is verified against exact raw bytes before JSON parsing or trusting shop,
-topic, and webhook ID headers. Accepted deliveries are stored in the component,
-processed through a retrying workpool, and retained for bounded failure
-inspection and replay. Topic routing and handler idempotency remain app-owned.
-
-## Session states and errors
-
-Missing scopes and credential expiries are exposed as stored session facts. A
-missing stored session is represented by `null` from session storage, or a
-structured missing-session error when creating an Admin context. Creating an
-Admin context is action-backed and performs authoritative lifecycle checks.
-
-Transport and token failures throw `ConvexError` with serializable data:
+`sessionStorage` is the Shopify-compatible credential adapter:
 
 ```ts
-const detail = shopifyComponentErrorData(error)
-if (detail?.kind === 'transient_refresh_failure' && detail.retryable) {
-  // Retry at a bounded application workflow boundary.
-}
+const session = await shopify.sessionStorage.findSessionByShop(ctx, shopDomain)
+const byId = await shopify.sessionStorage.loadSession(ctx, `offline_${shopDomain}`)
+await shopify.sessionStorage.deleteSessionsForShop(ctx, shopDomain)
 ```
 
-GraphQL operation typing ends at compile time. Validate important response
-fields at runtime before using them in business invariants.
+Sessions are sanitized. Credentials never cross the component boundary.
+Deleting a session removes local credentials; it does not uninstall the app
+from Shopify.
 
-## Credential rotation
+### Webhooks
 
-To rotate `v1` to `v2`:
+The component verifies exact raw request bytes, persists accepted deliveries,
+deduplicates by webhook ID, retries app callbacks, and records terminal
+failures. The consuming app owns HTTP paths and business handlers.
 
-1. Set the new active key and active version `v2`.
-2. Put the old key in `SHOPIFY_TOKEN_ENCRYPTION_KEYS` as `v1`.
-3. From an operator-only action, repeatedly call
-   `shopify.operations.credentials.rotate(ctx, { cursor, batchSize: 25 })` and
-   pass the opaque `nextCursor` unchanged until `isDone`.
-4. Rerun from a null cursor and verify `migrated` is zero.
-5. Remove historical keys only after no stored row uses them.
+Use one explicit endpoint per Shopify topic and a shared route helper. The
+starter registers:
 
-Batch sizes are bounded to `1..100`. Rotation pagination is stable and writes
-use credential-generation preconditions.
+```text
+/webhooks/app/uninstalled
+/webhooks/app/scopes-update
+/webhooks/customers/data-request
+/webhooks/customers/redact
+/webhooks/shop/redact
+```
 
-## Partner API and REST policy
+After authentication, accept the delivery with an internal Convex handler:
 
-Partner API credentials belong to the developer organization, not a shop
-session. Use the separate entry point:
+```ts
+const delivery = await shopify.authenticate.webhook(ctx, request)
+
+await shopify.webhooks.accept(ctx, delivery, {
+  handler: internal.webhooks.appUninstalled,
+  deduplicate: true,
+})
+```
+
+`app/scopes_update` automatically replaces the component's stored granted
+scope set. `app/uninstalled` automatically removes component credentials. App
+handlers remain responsible for memberships, domain data, and privacy work.
+All webhook handlers must be idempotent.
+
+### Credential rotation
+
+Rotate encryption keys through the operator-only action:
+
+```ts
+await shopify.operations.credentials.rotate(ctx, {
+  cursor: null,
+  batchSize: 25,
+})
+```
+
+Continue with the returned cursor until `isDone` is true. Keep old keys in the
+rotation keyring until every stored row has been migrated.
+
+### Partner GraphQL
+
+Partner API access is separate from shop credentials:
 
 ```ts
 import { createShopifyPartnerClient } from '@convex-dev/shopify/partner'
 
 const partner = createShopifyPartnerClient(components.shopify)
-const result = await partner.graphql(ctx, {
-  document: ActiveSubscriptionDocument,
-  variables: { appId, shopId },
-})
+const result = await partner.graphql(ctx, { document, variables })
 ```
 
-The package exposes no Admin REST client. GraphQL Admin is the supported API.
+The package provides Admin GraphQL and Partner GraphQL. It does not provide an
+Admin REST client.
 
-## Shopify-style GraphQL codegen
+## Template commands
 
-Install Shopify's official preset and GraphQL Config in the consuming app:
+From a generated app:
 
 ```sh
-npm install --save-dev @graphql-codegen/cli @shopify/api-codegen-preset graphql-config
-```
-
-Configure `.graphqlrc.ts`:
-
-```ts
-import { ApiType, shopifyApiProject } from '@shopify/api-codegen-preset'
-
-const apiVersion = '2026-07'
-const documents = ['./convex/**/*.{ts,tsx}']
-
-export default {
-  schema: `https://shopify.dev/admin-graphql-direct-proxy/${apiVersion}`,
-  documents,
-  projects: {
-    default: shopifyApiProject({
-      apiType: ApiType.Admin,
-      apiVersion,
-      documents,
-      outputDir: './convex/types',
-      module: '@convex-dev/shopify',
-    }),
-  },
-}
-```
-
-Write operations as inline `#graphql` template strings and run
-`graphql-codegen`, or `graphql-codegen --watch` during development. Generated
-declarations augment this package's `AdminQueries` and `AdminMutations`;
-consumers do not import generated documents.
-
-Keep the config's `apiVersion` exactly aligned with the component runtime
-`SHOPIFY_API_VERSION`. Update both together and regenerate before deploying a
-new Shopify Admin API version.
-
-`admin.graphql(...)` is the Shopify-template-shaped primary API.
-`admin.graphqlDocument(...)` is an explicit advanced escape hatch for projects
-that already use `TypedDocumentNode` codegen.
-
-## Testing and packaging
-
-```ts
-import { register } from '@convex-dev/shopify/test'
-
-const t = convexTest(schema, modules)
-register(t, 'shopify')
-```
-
-Build order is component codegen, package build, then example typecheck:
-
-```sh
-npm run build
-npm run typecheck:example
+npm run dev                 # Convex + Vite development
+npm run setup               # link Shopify/Convex and configure secrets
+npm run config:check        # validate TOML against runtime scopes/version
+npm run shopify:codegen     # generate Admin GraphQL types
 npm test
-npm run pack:check
-npm pack --dry-run
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-## Official references
+For a reviewed production release, deploy Convex, publish the SPA with
+`npm run publish:static`, update the named Shopify production configuration,
+and smoke-test installation, deep links, scope updates, uninstall, and privacy
+webhooks. See [`template/docs/OPERATIONS.md`](template/docs/OPERATIONS.md).
 
-- [Shopify React Router package](https://shopify.dev/docs/api/shopify-app-react-router/latest)
-- [Authenticate Admin](https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin)
-- [Shopify app template](https://github.com/Shopify/shopify-app-template-react-router)
-- [Shopify Session model](https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/lib/session/session.ts)
-- [Session tokens](https://shopify.dev/docs/apps/build/authentication-authorization/session-tokens)
-- [Token exchange](https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/token-exchange)
-- [Expiring offline tokens](https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/offline-access-tokens)
-- [Webhook verification](https://shopify.dev/docs/apps/build/webhooks/verify-deliveries)
-- [Convex component authoring](https://docs.convex.dev/components/authoring)
+## Boundaries
 
-## Remaining release decisions
+The component owns Shopify protocol and credential state. The application owns
+users, authorization, domain tables, HTTP route registration, and business
+effects. Do not add TanStack server functions, SSR, or a second backend to the
+default template.
 
-- Choose an open-source license; the repository currently establishes none.
-- Remove the package's `private: true` only during an intentional npm
-  publication and licensing review. Public-GitHub installation is the
-  supported distribution path today.
-- Establish package ownership, changelog, support policy, and Convex peer-version
-  policy.
+More detail:
+
+- [`CONTRACT.md`](CONTRACT.md): supported API and ownership contract.
+- [`ENVIRONMENT.md`](ENVIRONMENT.md): environment variables and secrets.
+- [`SECURITY.md`](SECURITY.md): trust boundaries and credential handling.
+- [`template/README.md`](template/README.md): starter-specific quickstart.
